@@ -14,19 +14,12 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
+
     public function create(): View
     {
         return view('auth.register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -49,10 +42,9 @@ class RegisteredUserController extends Controller
             'target_weight' => $request->target_weight,
         ]);
 
-        event(new Registered($user));
+        $user->sendEmailVerificationNotification();
 
-        Auth::login($user);
-
-        return redirect(route('login', absolute: false));
+        return redirect()->route('login') // メール未認証でもアクセスできるページ
+            ->with('message', '登録完了。メールを確認してください。');
     }
 }

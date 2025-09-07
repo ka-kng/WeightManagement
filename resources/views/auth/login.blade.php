@@ -9,15 +9,15 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body>
-  <div class="max-w-md mx-auto mt-10 p-6 border rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">ログイン</h1>
+<body class="h-screen flex items-center justify-center">
+  <div class="w-full max-w-xl mx-auto p-4 md:border rounded md:shadow">
+    <h1 class="text-center text-3xl font-bold mb-4">ログイン</h1>
 
     @if (session('status'))
     <div class="bg-green-100 p-2 mb-4">{{ session('status') }}</div>
     @endif
 
-    <form method="POST" action="{{ route('login') }}">
+    <form class="p-4 border rounded shadow" method="POST" action="{{ route('login') }}">
       @csrf
 
       <div class="mb-4">
@@ -47,7 +47,14 @@
         class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
         ログイン
       </button>
+
+      <a href="{{ route('register') }}" class="block mt-2 text-blue-500 hover:underline">
+        登録はこちら
+      </a>
+
     </form>
+
+
   </div>
 </body>
 

@@ -12,11 +12,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use App\Models\User;
 
+<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | Guest Routes
 |--------------------------------------------------------------------------
 */
+=======
+>>>>>>> 4cf5f76 (メール認証)
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -41,6 +44,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
@@ -52,30 +56,47 @@ Route::middleware('auth')->group(function () {
         ->name('verification.notice');
 
     // メール再送
+=======
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', EmailVerificationPromptController::class)
+        ->name('verification.notice');
+
+>>>>>>> 4cf5f76 (メール認証)
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
+<<<<<<< HEAD
     // パスワード確認 / 更新
+=======
+>>>>>>> 4cf5f76 (メール認証)
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
         ->name('password.confirm');
 
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
+<<<<<<< HEAD
     Route::put('password', [PasswordController::class, 'update'])
         ->name('password.update');
 
     // ログアウト
+=======
+    Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+
+>>>>>>> 4cf5f76 (メール認証)
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });
 
+<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | Email Verification Route (No Auth Middleware)
 |--------------------------------------------------------------------------
 | 未ログインでもリンクを踏めるよう auth ミドルウェアは外す
 */
+=======
+>>>>>>> 4cf5f76 (メール認証)
 Route::get('verify-email/{id}/{hash}', function ($id, $hash) {
     $user = User::findOrFail($id);
 

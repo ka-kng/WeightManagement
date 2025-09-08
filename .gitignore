@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 /vendor/
 node_modules/
 npm-debug.log
@@ -30,6 +31,8 @@ Homestead.json
 .phpactor.json
 auth.json
 =======
+=======
+>>>>>>> 4cf5f76 (メール認証)
 *.log
 .DS_Store
 .env
@@ -54,4 +57,7 @@ auth.json
 Homestead.json
 Homestead.yaml
 Thumbs.db
+<<<<<<< HEAD
 >>>>>>> 96fa523 (体重管理アプリ作成)
+=======
+>>>>>>> 4cf5f76 (メール認証)

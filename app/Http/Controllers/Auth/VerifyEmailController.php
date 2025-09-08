@@ -22,6 +22,10 @@ class VerifyEmailController extends Controller
             event(new Verified($request->user()));
         }
 
+<<<<<<< HEAD
         return redirect()->intended(route('record.index', absolute: false).'?verified=1');
+=======
+        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+>>>>>>> 4cf5f76 (メール認証)
     }
 }

@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\URL;
 
 
 Route::middleware('auth')->group(function () {
-    Route::get('/record', function () {
-        return view('record.recordList');
-    })->name('record.index');
+    Route::get('/record/register', function () {
+        return view('record/recordRegister');
+    })->name('record.register');
 });
 
 Route::get('/email/verify/{id}/{hash}', function ($id, $hash) {

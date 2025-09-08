@@ -16,15 +16,18 @@
 
 
     </head>
-    <body>
-        <header>
+    <body class="px-6">
+        <header class="max-w-screen-xl mx-auto py-6 flex items-center justify-between">
             <div>
-                <a href="/">g</a>
+                <a href="/">体重管理アプリ</a>
             </div>
             <div>
-                <ul>
+                <ul class="flex items-center justify-between gap-5">
+                    <li class="hidden lg:block">
+                        ログアウト
+                    </li>
                     <li>
-
+                        ログアウト
                     </li>
                 </ul>
             </div>

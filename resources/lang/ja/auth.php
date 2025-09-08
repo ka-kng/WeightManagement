@@ -1,7 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 return [
-    'failed' => 'メールアドレスかパスワードが正しくありません。',
+    'failed'   => '認証に失敗しました。',
     'password' => 'パスワードが正しくありません。',
-    'throttle' => 'ログイン試行が多すぎます。:seconds 秒後に再試行してください。',
+    'throttle' => 'ログインの試行回数が多すぎます。:seconds 秒後にお試しください。',
 ];

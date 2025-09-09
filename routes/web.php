@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RecordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -8,9 +9,10 @@ use Illuminate\Support\Facades\URL;
 
 
 Route::middleware('auth')->group(function () {
-    Route::get('/record/register', function () {
-        return view('record/recordRegister');
-    })->name('record.register');
+    Route::prefix('records')->name('records.')->group(function () {
+        Route::get('/register', [RecordController::class, 'create'])->name('create');
+        Route::post('/register', [RecordController::class, 'store'])->name('store');
+    });
 });
 
 Route::get('/email/verify/{id}/{hash}', function ($id, $hash) {

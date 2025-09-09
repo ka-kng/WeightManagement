@@ -18,7 +18,7 @@
 
 </head>
 
-<body class="px-6">
+<body class="px-6 pb-28">
     <header class="max-w-screen-lg mx-auto py-6 flex items-center justify-between">
         <div>
             <a href="/">体重管理アプリ</a>

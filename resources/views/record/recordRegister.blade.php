@@ -1,7 +1,7 @@
 @extends('layouts.app') {{-- 今のテンプレート名が app.blade.php の場合 --}}
 
 @section('content')
-<div class="max-w-screen-lg mx-auto">
+<div class="max-w-screen-lg mx-auto ">
     <h1 class=" text-2xl font-bold mb-4">データを登録(編集)する</h1>
 
     <form class="space-y-3 mt-10" method="POST" action="{{ route('records.store') }}">
@@ -66,6 +66,50 @@
                     <input type="checkbox" class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500">
                     <span>ミネラル</span>
                 </label>
+            </div>
+
+            <div>
+                <textarea
+                    class="w-full mt-3 rounded text-left"
+                    rows="3"
+                    name=""
+                    id=""
+                    placeholder="具体的な品名や、カロリーを入力することで、AI分析がより正確になります。"></textarea>
+            </div>
+        </div>
+
+        <div class="">
+            <label for="">運動</label>
+            <div class="grid grid-cols-3 mt-3">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500">
+                    <span>有酸素運動</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500">
+                    <span>筋トレ</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500">
+                    <span>ストレッチ</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500">
+                    <span>ヨガ</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500">
+                    <span>スポーツ</span>
+                </label>
+            </div>
+
+            <div>
+                <textarea
+                    class="w-full mt-3 rounded text-left"
+                    rows="3"
+                    name=""
+                    id=""
+                    placeholder="具体的にどんな運動をしたか、入力することで、AI分析がより正確になります。"></textarea>
             </div>
         </div>
 

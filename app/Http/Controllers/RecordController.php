@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Record;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RecordController extends Controller
 {
@@ -25,7 +26,42 @@ class RecordController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'weight' => 'required|numeric|min:0',
+            'sleep_hours' => 'required|integer|min:0|max:23',
+            'sleep_minutes' => 'required|integer|min:0|max:59',
+            'meals' => 'nullable|array',
+            'meal_detail' => 'nullable|string',
+            'meal_photos' => 'nullable|array|max:5',
+            'meal_photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'exercises' =>  'nullable|array',
+            'exercise_detail' => 'nullable|string',
+        ]);
+
+        $record = new Record();
+        $record->user_id = Auth::id();
+        $record->date = $validated['date'];
+        $record->weight = $validated['weight'];
+        $record->sleep_hours = $validated['sleep_hours'];
+        $record->sleep_minutes = $validated['sleep_minutes'];
+        $record->meals = isset($validated['meals']) ? json_encode($validated['meals'], JSON_UNESCAPED_UNICODE) : null;
+        $record->meal_detail = $validated['meal_detail'] ?? null;
+        $record->exercises = isset($validated['exercises']) ? json_encode($validated['exercises'], JSON_UNESCAPED_UNICODE) : null;
+        $record->exercise_detail = $validated['exercise_detail'] ?? null;
+
+        if ($request->hasFile('meal_photos')) {
+            $photos = [];
+            foreach ($request->file('meal_photos') as $file) {
+                $path = $file->store('meal_photos', 'public');
+                $photos[] = $path;
+            }
+            $record->meal_photos = json_encode($photos);
+        }
+
+        $record->save();
+
+        return redirect()->back()->with('success', '記録を保存しました');
     }
 
     /**

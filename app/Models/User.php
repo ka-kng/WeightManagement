@@ -22,4 +22,9 @@ class User extends Authenticatable
         'email_verified_at',
     ];
 
+    public function record()
+    {
+        return $this->hasMany(Record::class);
+    }
+
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\URL;
 
 Route::middleware('auth')->group(function () {
     Route::prefix('records')->name('records.')->group(function () {
+        Route::get('/list', [RecordController::class, 'index'])->name('index');
         Route::get('/register', [RecordController::class, 'create'])->name('create');
         Route::post('/register', [RecordController::class, 'store'])->name('store');
     });

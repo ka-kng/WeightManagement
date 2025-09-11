@@ -164,5 +164,9 @@ return [
         'password'              => 'パスワード',
         'password_confirmation' => 'パスワード確認',
         'target_weight'         => '目標体重',
+        'date'                  => '日付',
+        'weight'                => '体重',
+        'sleep_hours'           => '時間',
+        'sleep_minutes'         => '分',
     ],
 ];

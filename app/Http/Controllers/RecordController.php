@@ -13,7 +13,11 @@ class RecordController extends Controller
      */
     public function index()
     {
-        //
+        $records = Record::where('user_id', Auth::id())
+                    ->orderBy('date', 'desc')
+                    ->get();
+
+        return view('record.recordList', compact('records'));
     }
 
     public function create()
@@ -44,7 +48,7 @@ class RecordController extends Controller
         $record->date = $validated['date'];
         $record->weight = $validated['weight'];
         $record->sleep_hours = $validated['sleep_hours'];
-        $record->sleep_minutes = $validated['sleep_minutes'];
+        $record->sleep_minutes = $validated['sleep_minutes'] ?? 0;
         $record->meals = isset($validated['meals']) ? json_encode($validated['meals'], JSON_UNESCAPED_UNICODE) : null;
         $record->meal_detail = $validated['meal_detail'] ?? null;
         $record->exercises = isset($validated['exercises']) ? json_encode($validated['exercises'], JSON_UNESCAPED_UNICODE) : null;

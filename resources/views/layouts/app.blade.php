@@ -18,29 +18,29 @@
 
 </head>
 
-<body class="px-6 pb-28">
-    <header class="max-w-screen-lg mx-auto py-6 flex items-center justify-between">
+<body class=" pb-28">
+    <header class="p-6 flex items-center justify-between w-full bg-blue-500 text-white">
         <div>
-            <a href="/">体重管理アプリ</a>
+            <a href="/" class="text-lg text-lg font-bold">体重管理アプリ</a>
         </div>
         <div>
             <ul class="flex items-center justify-between gap-5">
-                <li class="hidden lg:block">
+                <li class="hidden lg:block text-lg font-bold">
                     <a href="">
                         AI分析
                     </a>
                 </li>
-                <li class="hidden lg:block">
+                <li class="hidden lg:block text-lg font-bold">
                     <a href="{{ route('records.store') }}">
                         記録
                     </a>
                 </li>
-                <li class="hidden lg:block">
+                <li class="hidden lg:block text-lg font-bold">
                     <a href="">
                         マイページ
                     </a>
                 </li>
-                <li>
+                <li class="text-lg font-bold">
                     ログアウト
                 </li>
             </ul>
@@ -59,7 +59,7 @@
             <a href="" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 AI分析
             </a>
-            <a href="{{ route('records.store') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
+            <a href="{{ route('records.index') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 記録
             </a>
             <a href="" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">

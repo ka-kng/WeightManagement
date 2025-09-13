@@ -14,15 +14,15 @@ class RecordController extends Controller
     public function index()
     {
         $records = Record::where('user_id', Auth::id())
-                    ->orderBy('date', 'desc')
-                    ->get();
+            ->orderBy('date', 'desc')
+            ->get();
 
-        return view('record.recordList', compact('records'));
+        return view('record.list', compact('records'));
     }
 
     public function create()
     {
-        return view('record.recordRegister');
+        return view('record.form', ['record' => new Record()]);
     }
 
     /**
@@ -30,6 +30,7 @@ class RecordController extends Controller
      */
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'date' => 'required|date',
             'weight' => 'required|numeric|min:0',
@@ -37,10 +38,15 @@ class RecordController extends Controller
             'sleep_minutes' => 'required|integer|min:0|max:59',
             'meals' => 'nullable|array',
             'meal_detail' => 'nullable|string',
-            'meal_photos' => 'nullable|array|max:5',
-            'meal_photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'meal_photos'   => 'nullable|array|max:5',
+            'meal_photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
             'exercises' =>  'nullable|array',
             'exercise_detail' => 'nullable|string',
+        ], [
+            'meal_photos.max'      => '画像は最大5枚までアップロードできます。',
+            'meal_photos.*.max' => '1ファイルの容量は最大5MBまでです。',
+            'meal_photos.*.image' => '画像ファイルのみアップロードできます。',
+            'meal_photos.*.mimes' => '許可されている形式は jpeg, png, jpg, gif です。',
         ]);
 
         $record = new Record();
@@ -54,14 +60,16 @@ class RecordController extends Controller
         $record->exercises = isset($validated['exercises']) ? json_encode($validated['exercises'], JSON_UNESCAPED_UNICODE) : null;
         $record->exercise_detail = $validated['exercise_detail'] ?? null;
 
+        $photos = [];
         if ($request->hasFile('meal_photos')) {
-            $photos = [];
-            foreach ($request->file('meal_photos') as $file) {
-                $path = $file->store('meal_photos', 'public');
-                $photos[] = $path;
+            $files = $request->file('meal_photos');
+            $files = is_array($files) ? $files : [$files];
+
+            foreach ($files as $file) {
+                $photos[] = $file->store('meal_photos', 'public');
             }
-            $record->meal_photos = json_encode($photos);
         }
+        $record->meal_photos = json_encode($photos);
 
         $record->save();
 
@@ -73,7 +81,7 @@ class RecordController extends Controller
      */
     public function show(Record $record)
     {
-        //
+        return view('record.show', compact('record'));
     }
 
     /**
@@ -81,20 +89,54 @@ class RecordController extends Controller
      */
     public function edit(Record $record)
     {
-        //
+        return view('record.form', compact('record'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Record $record)
     {
-        //
+        $validated = $request->validate([
+             'date' => 'required|date',
+            'weight' => 'required|numeric|min:0',
+            'sleep_hours' => 'required|integer|min:0|max:23',
+            'sleep_minutes' => 'required|integer|min:0|max:59',
+            'meals' => 'nullable|array',
+            'meal_detail' => 'nullable|string',
+            'meal_photos'   => 'nullable|array|max:5',
+            'meal_photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+            'exercises' =>  'nullable|array',
+            'exercise_detail' => 'nullable|string',
+        ], [
+            'meal_photos.max'      => '画像は最大5枚までアップロードできます。',
+            'meal_photos.*.max' => '1ファイルの容量は最大5MBまでです。',
+            'meal_photos.*.image' => '画像ファイルのみアップロードできます。',
+            'meal_photos.*.mimes' => '許可されている形式は jpeg, png, jpg, gif です。',
+        ]);
+
+        $record->date = $validated['date'];
+        $record->weight = $validated['weight'];
+        $record->sleep_hours = $validated['sleep_hours'];
+        $record->sleep_minutes = $validated['sleep_minutes'] ?? 0;
+        $record->meals = isset($validated['meals']) ? json_encode($validated['meals'], JSON_UNESCAPED_UNICODE) : null;
+        $record->meal_detail = $validated['meal_detail'] ?? null;
+        $record->exercises = isset($validated['exercises']) ? json_encode($validated['exercises'], JSON_UNESCAPED_UNICODE) : null;
+        $record->exercise_detail = $validated['exercise_detail'] ?? null;
+
+        $photos = [];
+        if ($request->hasFile('meal_photos')) {
+            $files = $request->file('meal_photos');
+            $files = is_array($files) ? $files : [$files];
+
+            foreach ($files as $file) {
+                $photos[] = $file->store('meal_photos', 'public');
+            }
+        }
+
+        $record->meal_photos = json_encode($photos);
+        $record->save();
+
+        return redirect()->route('records.edit', $record)->with('success', '記録を更新しました');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Record $record)
     {
         //

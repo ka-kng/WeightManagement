@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Record;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class RecordController extends Controller
 {
@@ -73,7 +74,7 @@ class RecordController extends Controller
 
         $record->save();
 
-        return redirect()->back()->with('success', '記録を保存しました');
+        return redirect()->route('records.index', $record)->with('success', '記録を更新しました');
     }
 
     /**
@@ -95,7 +96,7 @@ class RecordController extends Controller
     public function update(Request $request, Record $record)
     {
         $validated = $request->validate([
-             'date' => 'required|date',
+            'date' => 'required|date',
             'weight' => 'required|numeric|min:0',
             'sleep_hours' => 'required|integer|min:0|max:23',
             'sleep_minutes' => 'required|integer|min:0|max:59',
@@ -121,8 +122,18 @@ class RecordController extends Controller
         $record->exercises = isset($validated['exercises']) ? json_encode($validated['exercises'], JSON_UNESCAPED_UNICODE) : null;
         $record->exercise_detail = $validated['exercise_detail'] ?? null;
 
-        $photos = [];
+        $photos = $record->meal_photos ? json_decode($record->meal_photos, true) : [];
+
         if ($request->hasFile('meal_photos')) {
+
+            if ($photos) {
+                foreach ($photos as $oldPhoto) {
+                    Storage::disk('public')->delete($oldPhoto);
+                }
+            }
+
+            $photos = [];
+
             $files = $request->file('meal_photos');
             $files = is_array($files) ? $files : [$files];
 
@@ -134,11 +145,19 @@ class RecordController extends Controller
         $record->meal_photos = json_encode($photos);
         $record->save();
 
-        return redirect()->route('records.edit', $record)->with('success', '記録を更新しました');
+        return redirect()->route('records.show', $record)->with('success', '記録を更新しました');
     }
 
     public function destroy(Record $record)
     {
-        //
+        if ($record->meal_photos) {
+            foreach (json_decode($record->meal_photos, true) as $photo) {
+                Storage::disk('public')->delete($photo);
+            }
+        }
+
+        $record->delete();
+
+        return redirect()->route('records.index')->with('success', '記録を削除しました');
     }
 }

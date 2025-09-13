@@ -2,7 +2,14 @@
 
 @section('content')
     <div class="max-w-screen-lg mx-auto px-6 mt-3">
-        <h1 class=" text-2xl font-bold mb-4">データを{{ $record->exists ? '編集' : '新規登録' }}する</h1>
+        <div>
+            @if ($record->exists)
+                <a href="{{ route('records.show', $record->id) }}" class="hover:text-blue-500 text-xl underline">戻る</a>
+            @else
+                <a href="{{ route('records.index') }}" class="hover:text-blue-500 text-xl underline">戻る</a>
+            @endif
+        </div>
+        <h1 class=" text-2xl font-bold mb-4 mt-5">データを{{ $record->exists ? '編集' : '新規登録' }}する</h1>
 
         <form method="POST" action="{{ $record->exists ? route('records.update', $record) : route('records.store') }}"
             enctype="multipart/form-data" class="space-y-5 mt-10">

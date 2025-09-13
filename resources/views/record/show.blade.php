@@ -3,12 +3,40 @@
 @section('content')
     <div class="max-w-screen-lg mx-auto px-6">
         <div class="flex justify-between items-center mt-3">
-            <h1 class="text-xl font-bold">記録一覧</h1>
-            <div class="flex items-center gap-3">
-                <a class="text-red-600" href="{{ route('records.create') }}">削除する</a>
+
+            <div>
+                <a href="{{  route('records.index') }}" class="hover:text-blue-500 text-xl underline">戻る</a>
+            </div>
+
+            <div class="flex items-center gap-5 text-xl">
+                <div x-data="{ open: false }" class="inline">
+                    <button @click="open = true" class="text-red-600">削除する</button>
+
+                    <!-- モーダル -->
+                    <div x-show="open" class="fixed px-3 inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div class="bg-white rounded-lg p-6 w-96">
+                            <p class="mb-4 text-center text-gray-700">本当に削除しますか？</p>
+                            <div class="flex justify-end space-x-2">
+                                <button @click="open = false"
+                                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">キャンセル</button>
+
+                                <form action="{{ route('records.destroy', $record->id) }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">削除</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <a class="text-blue-600" href="{{ route('records.edit', $record->id) }}">編集する</a>
             </div>
+
         </div>
+
+        <h1 class="text-xl font-bold mt-5">記録詳細</h1>
 
         <div
             class="block rounded-2xl shadow-md hover:shadow-xl transform duration-300 p-4 border border-gray-200 h-full mt-5">
@@ -46,10 +74,11 @@
                 </div>
 
                 <div class="swiper mySwiper">
-                  <p class="font-medium text-lg">食事の写真：</p>
+                    <p class="font-medium text-lg">食事の写真：</p>
+
                     <div class="swiper-wrapper">
                         @foreach (json_decode($record->meal_photos ?? '[]', true) as $photo)
-                            <div class="swiper-slide flex justify-center items-center bg-gray-100">
+                            <div class="swiper-slide flex justify-center items-center">
                                 <img src="{{ asset("storage/$photo") }}" class="w-full max-h-80 object-contain rounded-lg">
                             </div>
                         @endforeach
@@ -63,6 +92,7 @@
 
                     <!-- ページネーション -->
                     <div class="swiper-pagination mt-2"></div>
+
                 </div>
 
                 <div class="">

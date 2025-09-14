@@ -27,4 +27,8 @@ class User extends Authenticatable
         return $this->hasMany(Record::class);
     }
 
+    protected $casts = [
+        'birth_date' => 'date',
+    ];
+    
 }

@@ -21,7 +21,7 @@
 <body class=" pb-28">
     <header class="p-6 flex items-center justify-between w-full bg-blue-500 text-white">
         <div>
-            <a href="/" class="text-lg text-lg font-bold">体重管理アプリ</a>
+            <a href="{{ route('home.index') }}" class="text-lg text-lg font-bold">体重管理アプリ</a>
         </div>
         <div>
             <ul class="flex items-center justify-between gap-5">
@@ -53,7 +53,7 @@
 
     <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 lg:hidden">
         <div class="flex justify-around text-center  divide-x divide-gray-300">
-            <a href="" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
+            <a href="{{ route('home.index') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 ホーム
             </a>
             <a href="" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">

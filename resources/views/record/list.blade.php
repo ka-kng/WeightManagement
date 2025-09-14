@@ -30,10 +30,10 @@
 
                     <div class="">
                         <p>摂取内容：</p>
-                        <p class="grid grid-cols-3 gap-3">
+                        <p class="grid grid-cols-3 gap-3 mt-2">
                             @if ($record->meals)
                                 @foreach (json_decode($record->meals, true) as $meal)
-                                    <span class="px-2 py-1 mt-2 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
+                                    <span class="px-2 py-1 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
                                         {{ $meal }}
                                     </span>
                                 @endforeach

@@ -8,6 +8,9 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
+import './chart/weightWeek';
+
+
 // DOM が完全に読み込まれてから初期化
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.mySwiper').forEach(el => {

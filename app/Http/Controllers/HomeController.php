@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Record;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,13 +15,12 @@ class HomeController extends Controller
     private const GENDER_FEMALE = 2;
 
     // BMI・体脂肪率計算定数
-    private const BMI_COEFF = 1.2;
-    private const AGE_COEFF = 0.23;
-    private const BODY_FAT_CONST_MALE = 16.2;
-    private const BODY_FAT_CONST_FEMALE = 5.4;
-
-    // 睡眠計算定数
-    private const MINUTES_PER_HOUR = 60;
+    private const BODY_FAT_BASE        = 3.02;
+    private const BODY_FAT_WEIGHT_COEFF = 0.461;
+    private const BODY_FAT_HEIGHT_COEFF = 0.089;
+    private const BODY_FAT_AGE_COEFF    = 0.038;
+    private const BODY_FAT_CONST        = -0.238;
+    private const BODY_FAT_MALE_ADJUST  = -6.85;
 
     public function index()
     {
@@ -36,21 +36,23 @@ class HomeController extends Controller
             // BMI計算
             $record->bmi = $record->weight / (($user->height / 100) ** 2);
 
-            // 体脂肪率計算（簡易）
-            $record->body_fat = $user->gender == self::GENDER_MALE
-                ? (self::BMI_COEFF * $record->bmi + self::AGE_COEFF * $age - self::BODY_FAT_CONST_MALE)
-                : (self::BMI_COEFF * $record->bmi + self::AGE_COEFF * $age - self::BODY_FAT_CONST_FEMALE);
+            $genderValue = ($user->gender == self::GENDER_MALE) ? 1 : 0;
 
-            // 睡眠時間を分に変換
-            $record->total_sleep_minutes = $record->sleep_hours * self::MINUTES_PER_HOUR + $record->sleep_minutes;
+            $bodyFatNumerator =
+                self::BODY_FAT_BASE +
+                self::BODY_FAT_WEIGHT_COEFF * $record->weight -
+                self::BODY_FAT_HEIGHT_COEFF * $user->height +
+                self::BODY_FAT_AGE_COEFF * $age +
+                self::BODY_FAT_CONST;
 
+            if ($user->gender == self::GENDER_MALE) { // 男性補正
+                $bodyFatNumerator += self::BODY_FAT_MALE_ADJUST;
+            }
+
+            $record->body_fat = ($bodyFatNumerator / $record->weight) * 100;
         };
 
         return view('home.index', compact('record'));
     }
 
-    public function create()
-    {
-        //
-    }
 }

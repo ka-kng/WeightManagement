@@ -5,12 +5,53 @@
         <div class="flex justify-between items-center mt-3">
             <h1 class="text-lg font-bold">ホーム（直近の記録）</h1>
         </div>
-        <div>
+        <div class="flex items-center justify-between">
+            <p class="mt-3">日付：{{ $record->date->format('Y/m/d') }}</p>
             <p class="mt-3">目標体重：{{ number_format($record->user->target_weight, 1) }} kg</p>
         </div>
 
-        <div>
-            
+        <div class="grid grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+
+            <a href="{{ route('home.weight') }}" class="border border-black p-3">
+                <div class="flex items-center justify-between">
+                    <p>体重</p>
+                    <p>→</p>
+                </div>
+                <div class="mt-3">
+                    <p class="text-3xl">{{ number_format($record->weight, 1) }} kg</p>
+                </div>
+            </a>
+
+            <a href="" class="border border-black p-3">
+                <div class="flex items-center justify-between">
+                    <p>BMI</p>
+                    <p>→</p>
+                </div>
+                <div class="mt-3">
+                    <p class="text-3xl">{{ number_format($record->bmi, 2) }} </p>
+                </div>
+            </a>
+
+            <a href="" class="border border-black p-3">
+                <div class="flex items-center justify-between">
+                    <p>体脂肪率</p>
+                    <p>→</p>
+                </div>
+                <div class="mt-3">
+                    <p class="text-3xl">{{ number_format($record->body_fat, 1) }} %</p>
+                </div>
+            </a>
+
+            <a href="" class="border border-black p-3">
+                <div class="flex items-center justify-between">
+                    <p>睡眠時間</p>
+                    <p>→</p>
+                </div>
+                <div class="mt-3">
+                    <p class="text-3xl">{{ $record->sleep_hours }}時間{{ $record->sleep_minutes }}分</p>
+                </div>
+            </a>
+
         </div>
 
     </div>

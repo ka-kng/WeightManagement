@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\URL;
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home.index');
-    Route::get('/home/weight', [HomeWeightController::class, 'weightShow'])->name('home.weight');
+    Route::get('/home/weight', [HomeWeightController::class, 'show'])->name('home.weight');
     Route::resource('records', RecordController::class);
 });
 

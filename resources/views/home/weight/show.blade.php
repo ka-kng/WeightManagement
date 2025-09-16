@@ -22,7 +22,7 @@
 
     <div class="max-w-screen-lg mx-auto">
         <div class="relative flex items-center justify-center py-3 border-b border-gray-300 font-bold">
-            <a class="absolute left-0 pl-2 cursor-pointer text-2xl ">←</a>
+            <a href="{{ route('home.index') }}" class="absolute left-0 pl-2 cursor-pointer text-2xl ">←</a>
 
             <h1 class="text-lg text-center">体重</h1>
         </div>
@@ -48,22 +48,35 @@
             <div class="mt-6">
                 <div x-show="tab === 'week'">
                     <!-- 週グラフ -->
-                    <p class="text-center">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}</p>
+                    @if (!empty($weekLabels))
+                        <p class="text-center">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}</p>
+                    @else
+                        <p class="text-center text-gray-400">データがありません</p>
+                    @endif
+
                     <canvas id="weight-week-chart" data-labels='@json($weekDays)'
                         data-data='@json($weekWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
                 </div>
-
                 <div x-show="tab === 'month'" x-cloak>
                     <!-- 月グラフ -->
-                    <p class="text-center">{{ $monthLabels[0] }} ～ {{ end($monthLabels) }}</p>
+                    @if (!empty($monthLabels))
+                        <p class="text-center">{{ $fullPeriodLabel }}</p>
+                    @else
+                        <p class="text-center text-gray-400">データがありません</p>
+                    @endif
                     <canvas id="weight-month-chart"></canvas>
                 </div>
 
                 <div x-show="tab === 'year'" x-cloak>
                     <!-- 年グラフ -->
-                    <p class="text-center">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}</p>
+                    @if (!empty($yearLabels))
+                        <p class="text-center">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}</p>
+                    @else
+                        <p class="text-center text-gray-400">データがありません</p>
+                    @endif
                     <canvas id="weight-year-chart"></canvas>
                 </div>
+
             </div>
 
         </div>

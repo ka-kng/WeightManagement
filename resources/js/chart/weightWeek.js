@@ -1,32 +1,54 @@
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
-document.addEventListener('DOMContentLoaded', () => {
-    const ctx = document.getElementById('weight-week-chart')?.getContext('2d');
-    if (!ctx) return;
+function createChart(id, labelText = '体重(kg)') {
+    const el = document.getElementById(id);
+    if (!el) return;
 
-    const weekLabels = JSON.parse(document.getElementById('weight-week-chart').dataset.labels);
-    const weightData = JSON.parse(document.getElementById('weight-week-chart').dataset.data);
+    const labels = JSON.parse(el.dataset.labels);
+    const data = JSON.parse(el.dataset.data);
 
-    new Chart(ctx, {
+    new Chart(el.getContext('2d'), {
         type: 'line',
         data: {
-            labels: weekLabels,
+            labels,
             datasets: [{
-                label: '体重(kg)',
-                data: weightData,
+                label: labelText,
+                data,
                 borderColor: 'rgb(59, 130, 246)',
                 backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                tension: 0.3
+                tension: 0.3,
+                spanGaps: true
             }]
         },
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                y: { title: { display: true, }, beginAtZero: false },
-                x: { title: { display: true, text: '日付' } }
+                y: { title: { display: true }, beginAtZero: false },
+                x: { title: { display: true, text: '' } }
             }
         }
     });
-});
+}
+
+window.weightTabs = function() {
+    return {
+        tab: 'week',
+        charts: {},
+
+        init() {
+            // 初期タブ描画
+            this.charts.week = createChart('weight-week-chart');
+        },
+
+        changeTab(name) {
+            this.tab = name;
+            this.$nextTick(() => {
+                if (!this.charts[name]) {
+                    this.charts[name] = createChart(`weight-${name}-chart`);
+                }
+            });
+        }
+    }
+}

@@ -27,60 +27,60 @@
             <h1 class="text-lg text-center">体重</h1>
         </div>
 
-        <div x-data="{ tab: 'week' }" class="max-w-screen-lg mx-auto mt-6">
+        <div x-data="weightTabs()" class="max-w-screen-lg mx-auto mt-6">
 
             <!-- タブ -->
-            <div class="grid grid-cols-3  border-b border-gray-300">
+            <div class="grid grid-cols-3 border-b border-gray-300">
                 <button
                     :class="tab === 'week' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-600'"
-                    class="px-4 py-2 font-medium border-b-2 focus:outline-none" @click="tab = 'week'">週</button>
+                    class="px-4 py-2 font-medium border-b-2 focus:outline-none" @click="changeTab('week')">週</button>
 
                 <button
                     :class="tab === 'month' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-600'"
-                    class="px-4 py-2 font-medium border-b-2 focus:outline-none" @click="tab = 'month'">月</button>
+                    class="px-4 py-2 font-medium border-b-2 focus:outline-none" @click="changeTab('month')">月</button>
 
                 <button
                     :class="tab === 'year' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-600'"
-                    class="px-4 py-2 font-medium border-b-2 focus:outline-none" @click="tab = 'year'">年</button>
+                    class="px-4 py-2 font-medium border-b-2 focus:outline-none" @click="changeTab('year')">年</button>
             </div>
 
             <!-- タブ内容 -->
             <div class="mt-6">
-                <div x-show="tab === 'week'">
-                    <!-- 週グラフ -->
+                <div x-show="tab === 'week'" x-cloak>
                     @if (!empty($weekLabels))
                         <p class="text-center">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
-
                     <canvas id="weight-week-chart" data-labels='@json($weekDays)'
                         data-data='@json($weekWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
+
+                    <div>
+                        <p>{{ number_format($weekAverage, 1) }}</p>
+                    </div>
                 </div>
+
                 <div x-show="tab === 'month'" x-cloak>
-                    <!-- 月グラフ -->
                     @if (!empty($monthLabels))
                         <p class="text-center">{{ $fullPeriodLabel }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
-                    <canvas id="weight-month-chart"></canvas>
+                    <canvas id="weight-month-chart" data-labels='@json($monthLabels)'
+                        data-data='@json($monthWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
                 </div>
 
                 <div x-show="tab === 'year'" x-cloak>
-                    <!-- 年グラフ -->
                     @if (!empty($yearLabels))
                         <p class="text-center">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
-                    <canvas id="weight-year-chart"></canvas>
+                    <canvas id="weight-year-chart" data-labels='@json($yearDays)'
+                        data-data='@json($yearWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
                 </div>
-
             </div>
-
         </div>
-
     </div>
 
 </body>

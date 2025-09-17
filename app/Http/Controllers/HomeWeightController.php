@@ -15,7 +15,7 @@ class HomeWeightController extends Controller
         $today = Carbon::today();
 
         // 週
-        [$weekLabels, $weekDays, $weekWeights] = $this->getWeekData($userId, $today);
+        [$weekLabels, $weekDays, $weekWeights, $weekAverage] = $this->getWeekData($userId, $today);
 
         // 月（4週間ごとの平均を取得）
         [$monthLabels, $monthDays, $monthWeights, $fullPeriodLabel] = $this->getMonthData($userId, $today);
@@ -24,7 +24,7 @@ class HomeWeightController extends Controller
         [$yearLabels, $yearDays, $yearWeights] = $this->getYearData($userId, $today);
 
         return view('home.weight.show', compact(
-            'weekLabels', 'weekDays', 'weekWeights',
+            'weekLabels', 'weekDays', 'weekWeights', 'weekAverage',
             'monthLabels', 'monthDays', 'monthWeights', 'fullPeriodLabel',
             'yearLabels', 'yearDays', 'yearWeights'
         ));
@@ -48,7 +48,10 @@ class HomeWeightController extends Controller
             $weekWeights[] = $records[$key]->weight ?? null;
         }
 
-        return [$weekLabels, $weekDays, $weekWeights];
+        $weekAverage = !empty($weekWeights) ? round(array_sum(array_filter($weekWeights)) / count(array_filter($weekWeights)), 1) : null;
+
+
+        return [$weekLabels, $weekDays, $weekWeights, $weekAverage];
     }
 
     private function getMonthData($userId, Carbon $today)
@@ -91,20 +94,24 @@ class HomeWeightController extends Controller
         $yearDays = [];
         $yearWeights = [];
 
-        $start = $today->copy()->subMonths(11)->startOfMonth(); // 過去12か月
         $records = Record::where('user_id', $userId)
-            ->whereBetween('date', [$start, $today])
+            ->whereBetween('date', [$today->copy()->subYear()->addDay(), $today])
             ->get()
-            ->groupBy(fn($r) => $r->date->format('Y-m')); // 月でグループ化
+            ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
 
-        for ($i = 0; $i < 12; $i++) {
-            $month = $start->copy()->addMonths($i);
+        foreach (range(0, 11) as $i) {
+            $month = $today->copy()->subMonths(11 - $i);
+            $key = $month->format('Y-m');
+
             $yearLabels[] = $month->format('Y年m月');
             $yearDays[] = $month->format('n月');
 
-            $monthRecords = $records[$month->format('m')] ?? collect();
-            $avg = $monthRecords->avg('weight');
-            $yearWeights[] = $avg ? round($avg, 1) : null;
+            if (isset($records[$key])) {
+                $weights = $records[$key]->pluck('weight')->toArray();
+                $yearWeights[] = round(array_sum($weights) / count($weights), 1);
+            } else {
+                $yearWeights[] = null;
+            }
         }
 
         return [$yearLabels, $yearDays, $yearWeights];

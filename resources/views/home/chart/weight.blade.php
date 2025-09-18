@@ -55,8 +55,10 @@
                     <canvas id="weight-week-chart" data-labels='@json($weekDays)'
                         data-data='@json($weekWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
 
-                    <div>
-                        <p>{{ number_format($weekAverage, 1) }}</p>
+                    <div class="px-5 mt-5">
+                        <p class="font-bold text-xl">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}の平均体重</p>
+                        <p class="mt-5 text-5xl text-right">{{ number_format($weekAverage, 1) }} <span
+                                class="text-xl">kg</span></p>
                     </div>
                 </div>
 
@@ -68,6 +70,11 @@
                     @endif
                     <canvas id="weight-month-chart" data-labels='@json($monthLabels)'
                         data-data='@json($monthWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
+                    <div class="px-5 mt-5">
+                        <p class="font-bold text-xl">{{ $fullPeriodLabel }}の平均体重</p>
+                        <p class="mt-5 text-5xl text-right">{{ number_format($monthAverage, 1) }} <span
+                                class="text-xl">kg</span></p>
+                    </div>
                 </div>
 
                 <div x-show="tab === 'year'" x-cloak>
@@ -78,6 +85,11 @@
                     @endif
                     <canvas id="weight-year-chart" data-labels='@json($yearDays)'
                         data-data='@json($yearWeights)' height="250" class="w-full mt-5 mx-auto"></canvas>
+                    <div class="px-5 mt-5">
+                        <p class="font-bold text-xl">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}の平均体重</p>
+                        <p class="mt-5 text-5xl text-right">{{ number_format($yearAverage, 1) }} <span
+                                class="text-xl">kg</span></p>
+                    </div>
                 </div>
             </div>
         </div>

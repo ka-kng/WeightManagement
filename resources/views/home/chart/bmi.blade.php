@@ -22,7 +22,7 @@
                 </div>
             </a>
 
-            <a href="{{ route('home.weight') }}" class="border border-black p-3">
+            <a href="" class="border border-black p-3">
                 <div class="flex items-center justify-between">
                     <p>BMI</p>
                     <p>→</p>

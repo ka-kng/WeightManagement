@@ -16,7 +16,27 @@ class HomeBmiController extends Controller
         $height = $user->height / 100;
         $today = Carbon::today();
 
-        [$labels, $weekDays, $week]
+        [$weekLabels, $weekDays, $weekBmis, $weekAverage] = $this->getWeekData($user->id, $height, $today);
+
+        [$monthLabels, $monthDays, $monthBmis, $monthAverage, $fullPeriodLabel] = $this->getMonthData($user->id, $height, $today);
+
+        [$yearLabels, $yearDays, $yearBmis, $yearAverage] = $this->getYearData($user->id, $height, $today);
+
+        return view('home.chart.bmi', compact(
+            'weekLabels',
+            'weekDays',
+            'weekBmis',
+            'weekAverage',
+            'monthLabels',
+            'monthDays',
+            'monthBmis',
+            'monthAverage',
+            'fullPeriodLabel',
+            'yearLabels',
+            'yearDays',
+            'yearBmis',
+            'yearAverage'
+        ));
     }
 
     private function getWeekData($userId, $height, Carbon $today)
@@ -51,7 +71,7 @@ class HomeBmiController extends Controller
         $bmis = [];
 
         $periodStart = $today->copy()->subDays(27);
-                $records = Record::where('user_id', $userId)
+        $records = Record::where('user_id', $userId)
             ->whereBetween('date', [$periodStart, $today])
             ->get()
             ->keyBy(fn($r) => $r->date->format('Y-m-d'));
@@ -78,5 +98,37 @@ class HomeBmiController extends Controller
         $fullPeriodLabel = $periodStart->format('n月j日') . '～' . $end->format('n月j日');
 
         return [$labels, $days, $bmis, $monthAverage, $fullPeriodLabel];
+    }
+
+    private function getYearData($userId, $height, Carbon $today)
+    {
+        $labels = [];
+        $days = [];
+        $bmis = [];
+
+        $records = Record::where('user_id', $userId)
+            ->whereBetween('date', [$today->copy()->subYear()->addDay(), $today])
+            ->get()
+            ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
+
+        foreach (range(0, 11) as $i) {
+            $month = $today->copy()->subMonths(11 - $i);
+            $key = $month->format('Y-m');
+
+            $labels[] = $month->format('Y年n月');
+            $days[] = $month->format('n月');
+
+            if (isset($records[$key])) {
+                $weights = $records[$key]->pluck('weight')->toArray();
+                $monthBmis = array_map(fn($w) => round($w / ($height * $height), 1), $weights);
+                $bmis[] = round(array_sum($monthBmis) / count($monthBmis), 1);
+            } else {
+                $bmis[] = null;
+            }
+        }
+
+        $yearAverage = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 1) : null;
+
+        return [$labels, $days, $bmis, $yearAverage];
     }
 }

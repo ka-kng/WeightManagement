@@ -9,6 +9,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import './chart/weightWeek';
+import './chart/bmiWeek';
 
 
 // DOM が完全に読み込まれてから初期化

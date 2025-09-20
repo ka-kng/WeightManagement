@@ -56,10 +56,10 @@ class HomeBmiController extends Controller
             $key = $date->format('Y-m-d');
 
             $weight = $records[$key]->weight ?? null;
-            $bmis[] = $weight ? round($weight / ($height * $height), 1) : null;
+            $bmis[] = $weight ? round($weight / ($height * $height), 2) : null;
         }
 
-        $average = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 1) : null;
+        $average = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 2) : null;
 
         return [$labels, $days, $bmis, $average];
     }
@@ -90,10 +90,10 @@ class HomeBmiController extends Controller
             }
 
             $labels[] = $start->format('n/j') . '～' . $end->format('n/j');
-            $bmis[] = !empty($weekBmis) ? round(array_sum($weekBmis) / count($weekBmis), 1) : null;
+            $bmis[] = !empty($weekBmis) ? round(array_sum($weekBmis) / count($weekBmis), 2) : null;
         }
 
-        $monthAverage = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 1) : null;
+        $monthAverage = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 2) : null;
 
         $fullPeriodLabel = $periodStart->format('n月j日') . '～' . $end->format('n月j日');
 
@@ -121,13 +121,13 @@ class HomeBmiController extends Controller
             if (isset($records[$key])) {
                 $weights = $records[$key]->pluck('weight')->toArray();
                 $monthBmis = array_map(fn($w) => round($w / ($height * $height), 1), $weights);
-                $bmis[] = round(array_sum($monthBmis) / count($monthBmis), 1);
+                $bmis[] = round(array_sum($monthBmis) / count($monthBmis), 2);
             } else {
                 $bmis[] = null;
             }
         }
 
-        $yearAverage = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 1) : null;
+        $yearAverage = !empty(array_filter($bmis)) ? round(array_sum(array_filter($bmis)) / count(array_filter($bmis)), 2) : null;
 
         return [$labels, $days, $bmis, $yearAverage];
     }

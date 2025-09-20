@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HomeBmiController;
+use App\Http\Controllers\HomeBodyfatController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HomeWeightController;
 use App\Http\Controllers\RecordController;
@@ -15,6 +16,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home.index');
     Route::get('/home/weight', [HomeWeightController::class, 'show'])->name('home.weight');
     Route::get('/home/bmi', [HomeBmiController::class, 'show'])->name('home.bmi');
+    Route::get('/home/bodyfat', [HomeBodyfatController::class, 'show'])->name('home.bodyfat');
     Route::resource('records', RecordController::class);
 });
 

@@ -32,7 +32,7 @@
                 </div>
             </a>
 
-            <a href="" class="border border-black p-3">
+            <a href="{{ route('home.bodyfat') }}" class="border border-black p-3">
                 <div class="flex items-center justify-between">
                     <p>体脂肪率</p>
                     <p>→</p>

@@ -42,7 +42,7 @@
                 </div>
             </a>
 
-            <a href="" class="border border-black p-3">
+            <a href="{{ route('home.sleep') }}" class="border border-black p-3">
                 <div class="flex items-center justify-between">
                     <p>睡眠時間</p>
                     <p>→</p>

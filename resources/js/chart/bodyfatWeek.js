@@ -1,7 +1,7 @@
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
-function createChart(id, labelText = '体重(kg)') {
+function createChart(id, labelText = '体脂肪率(%)') {
     const el = document.getElementById(id);
     if (!el) return;
 
@@ -32,21 +32,21 @@ function createChart(id, labelText = '体重(kg)') {
     });
 }
 
-window.weightTabs = function() {
+window.bodtfatTabs = function() {
     return {
         tab: 'week',
         charts: {},
 
         init() {
             // 初期タブ描画
-            this.charts.week = createChart('weight-week-chart');
+            this.charts.week = createChart('bodtfat-week-chart');
         },
 
         changeTab(name) {
             this.tab = name;
             this.$nextTick(() => {
                 if (!this.charts[name]) {
-                    this.charts[name] = createChart(`weight-${name}-chart`);
+                    this.charts[name] = createChart(`bodtfat-${name}-chart`);
                 }
             });
         }

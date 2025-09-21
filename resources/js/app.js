@@ -10,6 +10,8 @@ import 'swiper/css/pagination';
 
 import './chart/weightWeek';
 import './chart/bmiWeek';
+import './chart/bodyfatWeek';
+import './chart/sleepgraph';
 
 
 // DOM が完全に読み込まれてから初期化

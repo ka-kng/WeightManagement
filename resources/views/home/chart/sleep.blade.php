@@ -24,7 +24,7 @@
         <div class="relative flex items-center justify-center py-3 border-b border-gray-300 font-bold">
             <a href="{{ route('home.index') }}" class="absolute left-0 pl-2 cursor-pointer text-2xl ">←</a>
 
-            <h1 class="text-lg text-center">体重</h1>
+            <h1 class="text-lg text-center">睡眠時間</h1>
         </div>
 
         <div x-data="sleepTabs()" class="max-w-screen-lg mx-auto mt-6">
@@ -48,7 +48,7 @@
             <div class="mt-6">
                 <div x-show="tab === 'week'" x-cloak>
                     @if (!empty($weekLabels))
-                        <p class="text-center">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}</p>
+                        <p class="text-center text-xl">{{ $weekLabels[0] }}～{{ end($weekLabels) }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
@@ -56,38 +56,39 @@
                         data-data='@json($weekSleep)' height="250" class="w-full mt-5 mx-auto"></canvas>
 
                     <div class="px-5 mt-5">
-                        <p class="font-bold text-xl">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}の平均体重</p>
+                        <p class="font-bold text-xl">{{ $weekLabels[0] }}～{{ end($weekLabels) }}の平均睡眠時間</p>
                         <p class="mt-5 text-5xl text-right"> {{ is_null($weekAverage) ? '-' : floor($weekAverage).'時間'.round(($weekAverage - floor($weekAverage))*60).'分' }}</p>
                     </div>
                 </div>
 
                 <div x-show="tab === 'month'" x-cloak>
                     @if (!empty($monthLabels))
-                        <p class="text-center">{{ $fullPeriodLabel }}</p>
+                        <p class="text-center text-xl">{{ $fullPeriodLabel }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
                     <canvas id="sleep-month-chart" data-labels='@json($monthLabels)'
                         data-data='@json($monthSleep)' height="250" class="w-full mt-5 mx-auto"></canvas>
                     <div class="px-5 mt-5">
-                        <p class="font-bold text-xl">{{ $fullPeriodLabel }}の平均体重</p>
+                        <p class="font-bold text-xl">{{ $fullPeriodLabel }}の平均睡眠時間</p>
                         <p class="mt-5 text-5xl text-right">{{ is_null($monthAverage) ? '-' : floor($monthAverage).'時間'.round(($monthAverage - floor($monthAverage))*60).'分' }}</p>
                     </div>
                 </div>
 
                 <div x-show="tab === 'year'" x-cloak>
                     @if (!empty($yearLabels))
-                        <p class="text-center">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}</p>
+                        <p class="text-center text-xl">{{ $yearLabels[0] }}～{{ end($yearLabels) }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
                     <canvas id="sleep-year-chart" data-labels='@json($yearDays)'
                         data-data='@json($yearSleep)' height="250" class="w-full mt-5 mx-auto"></canvas>
                     <div class="px-5 mt-5">
-                        <p class="font-bold text-xl">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}の平均体重</p>
+                        <p class="font-bold text-lg">{{ $yearLabels[0] }}～{{ end($yearLabels) }}の平均睡眠時間</p>
                         <p class="mt-5 text-5xl text-right">{{ is_null($yearAverage) ? '-' : floor($yearAverage).'時間'.round(($yearAverage - floor($yearAverage))*60).'分' }}</p>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

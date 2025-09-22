@@ -123,7 +123,7 @@ class HomeSleepController extends Controller
             $month = $today->copy()->subMonths(11 - $i);
             $key = $month->format('Y-m');
 
-            $yearLabels[] = $month->format('Y年m月');
+            $yearLabels[] = $month->format('Y年n月');
             $yearDays[] = $month->format('n月');
 
             if (isset($records[$key])) {

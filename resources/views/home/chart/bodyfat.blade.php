@@ -48,7 +48,7 @@
             <div class="mt-6">
                 <div x-show="tab === 'week'" x-cloak>
                     @if (!empty($weekLabels))
-                        <p class="text-center">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}</p>
+                        <p class="text-center text-xl">{{ $weekLabels[0] }}～{{ end($weekLabels) }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
@@ -56,37 +56,36 @@
                         data-data='@json($weekBodyFat)' height="250" class="w-full mt-5 mx-auto"></canvas>
 
                     <div class="px-5 mt-5">
-                        <p class="font-bold text-xl">{{ $weekLabels[0] }} ～ {{ end($weekLabels) }}の平均体重</p>
-                        <p class="mt-5 text-5xl text-right">{{ number_format($weekAverage, 1) }} </p>
+                        <p class="font-bold text-xl">{{ $weekLabels[0] }}～{{ end($weekLabels) }}の平均体脂肪率</p>
+                        <p class="mt-5 text-5xl text-right">{{ number_format($weekAverage, 1) }}<span class="text-xl">%</span></p>
                     </div>
                 </div>
 
                 <div x-show="tab === 'month'" x-cloak>
                     @if (!empty($monthLabels))
-                        <p class="text-center">{{ $fullPeriodLabel }}</p>
+                        <p class="text-center text-xl">{{ $fullPeriodLabel }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
                     <canvas id="bodtfat-month-chart" data-labels='@json($monthLabels)'
                         data-data='@json($monthBodyFat)' height="250" class="w-full mt-5 mx-auto"></canvas>
                     <div class="px-5 mt-5">
-                        <p class="font-bold text-xl">{{ $fullPeriodLabel }}の平均体重</p>
-                        <p class="mt-5 text-5xl text-right">{{ number_format($monthAverage, 1) }} </p>
+                        <p class="font-bold text-xl">{{ $fullPeriodLabel }}の平均体脂肪率</p>
+                        <p class="mt-5 text-5xl text-right">{{ number_format($monthAverage, 1) }}<span class="text-xl">%</span></p>
                     </div>
                 </div>
 
                 <div x-show="tab === 'year'" x-cloak>
                     @if (!empty($yearLabels))
-                        <p class="text-center">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}</p>
+                        <p class="text-center text-xl">{{ $yearLabels[0] }}～{{ end($yearLabels) }}</p>
                     @else
                         <p class="text-center text-gray-400">データがありません</p>
                     @endif
                     <canvas id="bodtfat-year-chart" data-labels='@json($yearMonths)'
                         data-data='@json($yearBodyFat)' height="250" class="w-full mt-5 mx-auto"></canvas>
                     <div class="px-5 mt-5">
-                        <p class="font-bold text-xl">{{ $yearLabels[0] }} ～ {{ end($yearLabels) }}の平均体重</p>
-                        <p class="mt-5 text-5xl text-right">{{ number_format($yearAverage, 2) }} <span
-                                class="text-xl"></span></p>
+                        <p class="font-bold text-lg">{{ $yearLabels[0] }}～{{ end($yearLabels) }}の平均体脂肪率</p>
+                        <p class="mt-5 text-5xl text-right">{{ number_format($yearAverage, 1) }}<span class="text-xl">%</span></p>
                     </div>
                 </div>
             </div>

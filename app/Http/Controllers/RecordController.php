@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\AnalyseRecordJob;
 use App\Models\Record;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -9,9 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class RecordController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $records = Record::where('user_id', Auth::id())
@@ -26,9 +24,6 @@ class RecordController extends Controller
         return view('record.form', ['record' => new Record()]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
 
@@ -74,20 +69,16 @@ class RecordController extends Controller
 
         $record->save();
 
+        AnalyseRecordJob::dispatch($record);
+
         return redirect()->route('records.index', $record)->with('success', '記録を更新しました');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Record $record)
     {
         return view('record.show', compact('record'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Record $record)
     {
         return view('record.form', compact('record'));

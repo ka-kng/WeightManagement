@@ -56,8 +56,8 @@
             <a href="{{ route('home.index') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 ホーム
             </a>
-            <a href="" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
-                AI分析
+            <a href="{{ route('comparison.latest') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
+                比較
             </a>
             <a href="{{ route('records.index') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 記録

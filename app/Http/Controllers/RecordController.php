@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\AnalyseRecordJob;
 use App\Models\Record;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RecordController extends Controller
 {
@@ -26,9 +26,14 @@ class RecordController extends Controller
 
     public function store(Request $request)
     {
+        $userId = Auth::id();
 
         $validated = $request->validate([
-            'date' => 'required|date',
+            'date' => [
+                'required',
+                'date',
+                Rule::unique('records')->where(fn($q) => $q->where('user_id', $userId)),
+            ],
             'weight' => 'required|numeric|min:0',
             'sleep_hours' => 'required|integer|min:0|max:23',
             'sleep_minutes' => 'required|integer|min:0|max:59',
@@ -39,6 +44,7 @@ class RecordController extends Controller
             'exercises' =>  'nullable|array',
             'exercise_detail' => 'nullable|string',
         ], [
+            'date.unique' => 'この日付の記録はすでに登録されています。',
             'meal_photos.max'      => '画像は最大5枚までアップロードできます。',
             'meal_photos.*.max' => '1ファイルの容量は最大5MBまでです。',
             'meal_photos.*.image' => '画像ファイルのみアップロードできます。',
@@ -69,8 +75,6 @@ class RecordController extends Controller
 
         $record->save();
 
-        AnalyseRecordJob::dispatch($record);
-
         return redirect()->route('records.index', $record)->with('success', '記録を更新しました');
     }
 
@@ -86,8 +90,17 @@ class RecordController extends Controller
 
     public function update(Request $request, Record $record)
     {
+
+        $userId = Auth::id();
+
         $validated = $request->validate([
-            'date' => 'required|date',
+            'date' => [
+                'required',
+                'date',
+                Rule::unique('records')
+                    ->where(fn($q) => $q->where('user_id', $userId))
+                    ->ignore($record->id), // 自分自身は除外
+            ],
             'weight' => 'required|numeric|min:0',
             'sleep_hours' => 'required|integer|min:0|max:23',
             'sleep_minutes' => 'required|integer|min:0|max:59',

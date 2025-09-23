@@ -24,9 +24,18 @@ class HomeWeightController extends Controller
         [$yearLabels, $yearDays, $yearWeights, $yearAverage] = $this->getYearData($userId, $today);
 
         return view('home.chart.weight', compact(
-            'weekLabels', 'weekDays', 'weekWeights', 'weekAverage',
-            'monthLabels', 'monthWeights', 'fullPeriodLabel', 'monthAverage',
-            'yearLabels', 'yearDays', 'yearWeights', 'yearAverage'
+            'weekLabels',
+            'weekDays',
+            'weekWeights',
+            'weekAverage',
+            'monthLabels',
+            'monthWeights',
+            'fullPeriodLabel',
+            'monthAverage',
+            'yearLabels',
+            'yearDays',
+            'yearWeights',
+            'yearAverage'
         ));
     }
 
@@ -48,7 +57,11 @@ class HomeWeightController extends Controller
             $weekWeights[] = $records[$key]->weight ?? null;
         }
 
-        $weekAverage = !empty($weekWeights) ? round(array_sum(array_filter($weekWeights)) / count(array_filter($weekWeights)), 1) : null;
+        $validWeights = array_filter($weekWeights);
+
+        $weekAverage = !empty($validWeights)
+            ? round(array_sum($validWeights) / count($validWeights), 1)
+            : null;
 
 
         return [$weekLabels, $weekDays, $weekWeights, $weekAverage];

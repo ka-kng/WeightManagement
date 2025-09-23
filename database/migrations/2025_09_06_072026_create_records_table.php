@@ -24,6 +24,7 @@ return new class extends Migration
             $table->json('exercises')->nullable();
             $table->text('exercise_detail')->nullable();
             $table->timestamps();
+            $table->unique(['user_id', 'date']);
         });
     }
 

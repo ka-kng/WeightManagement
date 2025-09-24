@@ -32,7 +32,7 @@
                 <div class="flex items-center justify-between">
                     <label for="">体重</label>
                     <div>
-                        <input class="w-20 rounded-full" name="weight" type="number" min="0"
+                        <input class="w-20 rounded-full" name="weight" type="number" min="0" step="0.1"
                             value="{{ old('weight', $record->weight !== null ? number_format($record->weight, 1) : '') }}">
                         <span>kg</span>
                     </div>

@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeBodyfatController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HomeSleepController;
 use App\Http\Controllers\HomeWeightController;
+use App\Http\Controllers\MypageController;
 use App\Http\Controllers\RecordComparisonController;
 use App\Http\Controllers\RecordController;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/home/bodyfat', [HomeBodyfatController::class, 'show'])->name('home.bodyfat');
     Route::get('/home/sleep', [HomeSleepController::class, 'show'])->name('home.sleep');
     Route::get('/comparison', [RecordComparisonController::class, 'latest'])->name('comparison.latest');
+    Route::get('/mypage', [MypageController::class, 'index'])->name('mypage.index');
+    Route::PUT('/mypage', [MypageController::class, 'update'])->name('mypage.update');
     Route::resource('records', RecordController::class);
 });
 

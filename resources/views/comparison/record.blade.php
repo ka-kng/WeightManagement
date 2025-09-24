@@ -2,9 +2,9 @@
 
 @section('content')
 <div class="container mx-auto p-4">
-    <h2 class="text-2xl font-bold mb-4">1週間の記録比較</h2>
+    <h2 class="text-2xl font-bold mb-6">10日間の記録比較</h2>
 
-    <div class="overflow-x-auto">
+    <div>
         <table class="min-w-full border border-gray-300 text-sm">
             <thead class="bg-gray-200">
                 <tr>
@@ -50,11 +50,11 @@
                     @endphp
 
                     <tr class="text-center {{ $bgClass }}">
-                        <td class="border px-2 py-1 text-left">{{ $current->date->format('n/d') }}</td>
-                        <td class="border px-2 py-1">{{ number_format($current->weight, 1) }} kg</td>
-                        <td class="border px-2 py-1">{{ $current->sleep_hours }}時間{{ $current->sleep_minutes }}分</td>
-                        <td class="border px-2 py-1">{{ $weightDiffText }}kg</td>
-                        <td class="border px-2 py-1">{{ $weightJudge }}</td>
+                        <td class="border px-2 py-2 text-left">{{ $current->date->format('n/d') }}</td>
+                        <td class="border px-2 py-2">{{ number_format($current->weight, 1) }} kg</td>
+                        <td class="border px-2 py-2">{{ $current->sleep_hours }}時間{{ $current->sleep_minutes }}分</td>
+                        <td class="border px-2 py-2">{{ $weightDiffText }}kg</td>
+                        <td class="border px-2 py-2">{{ $weightJudge }}</td>
                     </tr>
                 @endforeach
             </tbody>

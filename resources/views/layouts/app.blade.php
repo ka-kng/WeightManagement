@@ -26,23 +26,26 @@
         <div>
             <ul class="flex items-center justify-between gap-5">
                 <li class="hidden lg:block text-lg font-bold">
-                    <a href="">
-                        AI分析
+                    <a href="{{ route('comparison.latest') }}">
+                        比較
                     </a>
                 </li>
                 <li class="hidden lg:block text-lg font-bold">
-                    <a href="{{ route('records.store') }}">
+                    <a href="{{ route('records.index') }}">
                         記録
                     </a>
                 </li>
                 <li class="hidden lg:block text-lg font-bold">
-                    <a href="">
+                    <a href="{{ route('mypage.index') }}">
                         マイページ
                     </a>
                 </li>
-                <li class="text-lg font-bold">
-                    ログアウト
-                </li>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="text-lg font-bold">
+                        ログアウト
+                    </button>
+                </form>
             </ul>
         </div>
     </header>
@@ -62,7 +65,7 @@
             <a href="{{ route('records.index') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 記録
             </a>
-            <a href="" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
+            <a href="{{ route('mypage.index') }}" class="flex-1 text-sm text-gray-700 hover:text-blue-600 py-8">
                 マイページ
             </a>
         </div>

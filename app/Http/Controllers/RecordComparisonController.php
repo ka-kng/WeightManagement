@@ -8,33 +8,52 @@ use Illuminate\Support\Facades\Auth;
 
 class RecordComparisonController extends Controller
 {
-    // 最新7日分を比較表示
+    private const LATEST_COUNT = 10;
+
     public function latest()
     {
-        $userId = Auth::id(); // ログイン中ユーザー
+        $userId = Auth::id();
 
-        // 最新7件のレコード取得（降順）
-        $records = Record::where('user_id', $userId)
-            ->orderBy('date', 'desc')
-            ->take(10)
-            ->get();
+        // 最新10件取得（降順 → 昇順に整列）
+        $records = $this->getLatestRecords($userId);
 
-        if ($records->isEmpty()) {
-            abort(404, '記録がありません');
-        }
+        // 差分・判定・最新日のフラグを付与
+        $recordsWithPrevious = $this->prepareComparisonData($records);
 
-        // 前日との比較用に配列化して日付順に逆順（古い順）
-        $records = $records->sortBy('date')->values();
+        return view('comparison.record', compact('recordsWithPrevious'));
+    }
 
-        // 各レコードの前日データをセット
-        $recordsWithPrevious = $records->map(function ($record, $index) use ($records) {
+    private function getLatestRecords(int $userId)
+    {
+        return Record::where('user_id', $userId)
+            ->orderByDesc('date')
+            ->take(self::LATEST_COUNT)
+            ->get()
+            ->sortBy('date')
+            ->values();
+    }
+
+    private function prepareComparisonData($records)
+    {
+        return $records->map(function ($record, $index) use ($records) {
             $previous = $index > 0 ? $records[$index - 1] : null;
+
+            // 体重差分と判定
+            $weightDiff = $previous ? round(($record->weight ?? 0) - ($previous->weight ?? 0), 1) : null;
+            $weightJudge = $weightDiff !== null
+                ? ($weightDiff > 0 ? '増加' : ($weightDiff < 0 ? '減少' : '変化なし'))
+                : '-';
+            $weightDiffText = $weightDiff !== null
+                ? ($weightDiff > 0 ? '+'.$weightDiff : $weightDiff)
+                : '-';
+
             return [
                 'current' => $record,
                 'previous' => $previous,
+                'weightDiffText' => $weightDiffText,
+                'weightJudge' => $weightJudge,
+                'isLatest' => $index === count($records) - 1,
             ];
         });
-
-        return view('comparison.record', compact('recordsWithPrevious'));
     }
 }

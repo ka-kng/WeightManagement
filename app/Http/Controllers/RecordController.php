@@ -14,7 +14,7 @@ class RecordController extends Controller
     {
         $records = Record::where('user_id', Auth::id())
             ->orderBy('date', 'desc')
-            ->get();
+            ->paginate(20);
 
         return view('record.list', compact('records'));
     }
@@ -75,7 +75,7 @@ class RecordController extends Controller
 
         $record->save();
 
-        return redirect()->route('records.index', $record)->with('success', '記録を更新しました');
+        return redirect()->route('records.index')->with('success', '記録を更新しました');
     }
 
     public function show(Record $record)
@@ -99,7 +99,7 @@ class RecordController extends Controller
                 'date',
                 Rule::unique('records')
                     ->where(fn($q) => $q->where('user_id', $userId))
-                    ->ignore($record->id), // 自分自身は除外
+                    ->ignore($record->id),
             ],
             'weight' => 'required|numeric|min:0',
             'sleep_hours' => 'required|integer|min:0|max:23',
@@ -126,7 +126,14 @@ class RecordController extends Controller
         $record->exercises = isset($validated['exercises']) ? json_encode($validated['exercises'], JSON_UNESCAPED_UNICODE) : null;
         $record->exercise_detail = $validated['exercise_detail'] ?? null;
 
-        $photos = $record->meal_photos ? json_decode($record->meal_photos, true) : [];
+        $photos = [];
+        if ($record->meal_photos) {
+            if (is_string($record->meal_photos)) {
+                $photos = json_decode($record->meal_photos, true) ?: [];
+            } elseif (is_array($record->meal_photos)) {
+                $photos = $record->meal_photos;
+            }
+        }
 
         if ($request->hasFile('meal_photos')) {
 
@@ -155,8 +162,16 @@ class RecordController extends Controller
     public function destroy(Record $record)
     {
         if ($record->meal_photos) {
-            foreach (json_decode($record->meal_photos, true) as $photo) {
-                Storage::disk('public')->delete($photo);
+            // 文字列なら json_decode、配列ならそのまま
+            $photos = is_string($record->meal_photos)
+                ? json_decode($record->meal_photos, true)
+                : $record->meal_photos;
+
+            // 配列になったら削除
+            if (is_array($photos)) {
+                foreach ($photos as $photo) {
+                    Storage::disk('public')->delete($photo);
+                }
             }
         }
 

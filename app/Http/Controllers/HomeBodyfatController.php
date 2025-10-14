@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Record;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HomeBodyfatController extends Controller
 {
     private const GENDER_MALE = 1;
+
+    // 体脂肪計算定数
     private const BODY_FAT_BASE = 3.02;
     private const BODY_FAT_WEIGHT_COEFF = 0.461;
     private const BODY_FAT_HEIGHT_COEFF = 0.089;
@@ -17,37 +18,134 @@ class HomeBodyfatController extends Controller
     private const BODY_FAT_CONST = -0.238;
     private const BODY_FAT_MALE_ADJUST = -6.85;
 
+    private const DAYS_IN_WEEK = 7;
+    private const WEEKS_IN_MONTH = 4;
+    private const MONTHS_IN_YEAR = 12;
 
     public function show()
     {
         $user = Auth::user();
-        $userId = $user->id;
         $today = Carbon::today();
 
-        [$weekLabels, $weekDays, $weekBodyFat, $weekAverage] = $this->getWeekData($user, $today);
+        // 年間データを一括取得してキャッシュ
+        $records = $this->getRecordsBetween(
+            $user->id,
+            $today->copy()->subYear()->addDay(),
+            $today
+        );
 
-        [$monthLabels, $monthDays, $monthBodyFat, $monthAverage, $fullPeriodLabel] = $this->getMonthData($user, $today);
+        $weekData = $this->getPeriodData($user, $today->copy()->subDays(self::DAYS_IN_WEEK - 1), $today);
+        $monthData = $this->getMonthlyData($user, $records, $today);
+        $yearData = $this->getYearlyData($user, $records, $today);
 
-        [$yearLabels, $yearMonths, $yearBodyFat, $yearAverage] = $this->getYearData($user, $today);
-
-        return view('home.chart.bodyfat', compact(
-            'weekLabels',
-            'weekDays',
-            'weekBodyFat',
-            'weekAverage',
-            'monthLabels',
-            'monthDays',
-            'monthBodyFat',
-            'monthAverage',
-            'fullPeriodLabel',
-            'yearLabels',
-            'yearMonths',
-            'yearBodyFat',
-            'yearAverage',
-        ));
+        return view('home.chart.bodyfat', array_merge($weekData, $monthData, $yearData));
     }
 
-    private function calcBodyFat($weight, $height, $age, $gender)
+    // 期間データ取得（任意開始日～終了日）
+    private function getPeriodData($user, Carbon $start, Carbon $end): array
+    {
+        $records = $this->getRecordsBetween($user->id, $start, $end);
+
+        $labels = $days = $bodyFat = [];
+
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $labels[] = $date->format('n月d日');
+            $days[] = $date->format('j日');
+
+            $record = $records[$date->format('Y-m-d')] ?? null;
+            $bodyFat[] = $this->calcBodyFatFromRecord($record, $user);
+        }
+
+        return [
+            'weekLabels' => $labels,
+            'weekDays' => $days,
+            'weekBodyFat' => $bodyFat,
+            'weekAverage' => $this->calcAverage($bodyFat),
+        ];
+    }
+
+    // 月間データ取得（4週間）
+    private function getMonthlyData($user, $records, Carbon $today): array
+    {
+        $periodStart = $today->copy()->subDays(self::DAYS_IN_WEEK * self::WEEKS_IN_MONTH - 1);
+
+        $labels = $monthBodyFat = $weeksBodyFat = [];
+
+        for ($i = 0; $i < self::WEEKS_IN_MONTH; $i++) {
+            $start = $periodStart->copy()->addDays($i * self::DAYS_IN_WEEK);
+            $end = $start->copy()->addDays(self::DAYS_IN_WEEK - 1);
+
+            $weekValues = [];
+            for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+                $record = $records[$d->format('Y-m-d')] ?? null;
+                $weekValues[] = $this->calcBodyFatFromRecord($record, $user);
+            }
+
+            $weeksBodyFat[] = $weekValues;
+            $labels[] = $start->format('n/j') . '～' . $end->format('n/j');
+            $monthBodyFat[] = $this->calcAverage($weekValues);
+        }
+
+        return [
+            'monthLabels' => $labels,
+            'monthDaysBodyFat' => $weeksBodyFat,
+            'monthBodyFat' => $monthBodyFat,
+            'monthAverage' => $this->calcAverage($monthBodyFat),
+            'fullPeriodLabel' => $periodStart->format('n月j日') . '～' . $today->format('n月j日'),
+        ];
+    }
+
+    // 年間データ取得（12ヶ月）
+    private function getYearlyData($user, $records, Carbon $today): array
+    {
+        $start = $today->copy()->subMonths(self::MONTHS_IN_YEAR - 1)->startOfMonth();
+        $labels = $months = $bodyFat = [];
+
+        // 月単位にグループ化済み
+        $recordsByMonth = $records->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
+
+        for ($i = 0; $i < self::MONTHS_IN_YEAR; $i++) {
+            $month = $start->copy()->addMonths($i);
+            $key = $month->format('Y-m');
+
+            $labels[] = $month->format('Y年n月');
+            $months[] = $month->format('n月');
+
+            if (isset($recordsByMonth[$key])) {
+                $values = array_map(fn($r) => $this->calcBodyFatFromRecord($r, $user), $recordsByMonth[$key]->toArray());
+                $bodyFat[] = $this->calcAverage($values);
+            } else {
+                $bodyFat[] = null;
+            }
+        }
+
+        return [
+            'yearLabels' => $labels,
+            'yearMonths' => $months,
+            'yearBodyFat' => $bodyFat,
+            'yearAverage' => $this->calcAverage($bodyFat),
+        ];
+    }
+
+    // 指定期間のレコード取得
+    private function getRecordsBetween(int $userId, Carbon $start, Carbon $end)
+    {
+        return Record::where('user_id', $userId)
+            ->whereBetween('date', [$start, $end])
+            ->get()
+            ->keyBy(fn($r) => $r->date->format('Y-m-d'));
+    }
+
+    // レコードから体脂肪率計算
+    private function calcBodyFatFromRecord($record, $user): ?float
+    {
+        if (!$record) return null;
+        $age = $user->birth_date->age;
+        return round($this->calcBodyFat($record['weight'], $user->height, $age, $user->gender), 1);
+    }
+
+    // 体脂肪率計算
+    private function calcBodyFat(float $weight, float $height, int $age, int $gender): float
     {
         $val = self::BODY_FAT_BASE
             + self::BODY_FAT_WEIGHT_COEFF * $weight
@@ -55,115 +153,17 @@ class HomeBodyfatController extends Controller
             + self::BODY_FAT_AGE_COEFF * $age
             + self::BODY_FAT_CONST;
 
-        if ($gender == self::GENDER_MALE) {
+        if ($gender === self::GENDER_MALE) {
             $val += self::BODY_FAT_MALE_ADJUST;
         }
 
         return ($val / $weight) * 100;
     }
 
-    private function getWeekData($user, $today)
+    // 平均計算（nullを除外）
+    private function calcAverage(array $values): ?float
     {
-        $weekLabels = [];
-        $weekDays = [];
-        $weekBodyFat = [];
-
-        $records = Record::where('user_id', $user->id)
-            ->whereBetween('date', [$today->copy()->subDays(6), $today])
-            ->get()
-            ->keyBy(fn($r) => $r->date->format('Y-m-d'));
-
-        for ($date = $today->copy()->subDays(6); $date->lte($today); $date->addDay()) {
-            $weekLabels[] = $date->format('n月d日');
-            $weekDays[] = $date->format('j日');
-
-            $key = $date->format('Y-m-d');
-            if (isset($records[$key])) {
-                $weight = $records[$key]->weight;
-                $age = $user->birth_date->age;
-                $weekBodyFat[] = round($this->calcBodyFat($weight, $user->height, $age, $user->gender), 1);
-            } else {
-                $weekBodyFat[] = null;
-            }
-        }
-
-        $valid = array_filter($weekBodyFat, fn($v) => !is_null($v));
-        $weekAverage = !empty($valid) ? round(array_sum($valid) / count($valid), 1) : null;
-
-        return [$weekLabels, $weekDays, $weekBodyFat, $weekAverage];
-    }
-
-    private function getMonthData($user, $today)
-    {
-        $monthLabels = [];
-        $monthBodyFat = [];
-        $monthDaysBodyFat = [];
-
-        $records = Record::where('user_id', $user->id)
-            ->whereBetween('date', [$today->copy()->subDays(27), $today])
-            ->get()
-            ->keyBy(fn($r) => $r->date->format('Y-m-d'));
-
-        for ($i = 0; $i < 4; $i++) {
-            $start = $today->copy()->subDays(27)->addDays($i * 7);
-            $end = $start->copy()->addDays(6);
-
-            $weekBodyFat = [];
-            for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-                $key = $d->format('Y-m-d');
-                if (isset($records[$key])) {
-                    $weight = $records[$key]->weight;
-                    $age = $user->birth_date->age;
-                    $weekBodyFat[] = round($this->calcBodyFat($weight, $user->height, $age, $user->gender), 1);
-                } else {
-                    $weekBodyFat[] = null;
-                }
-            }
-            $monthDaysBodyFat[] = $weekBodyFat;
-            $monthLabels[] = $start->format('n/j') . '～' . $end->format('n/j');
-            $valid = array_filter($weekBodyFat, fn($v) => !is_null($v));
-            $monthBodyFat[] = !empty($valid) ? round(array_sum($valid) / count($valid), 1) : null;
-        }
-
-        $fullPeriodLabel = $today->copy()->subDays(27)->format('n月j日') . '～' . $end->format('n月j日');
-
-        $validMonth = array_filter($monthBodyFat, fn($v) => !is_null($v));
-        $monthAverage = !empty($validMonth) ? round(array_sum($validMonth) / count($validMonth), 1) : null;
-
-        return [$monthLabels, $monthDaysBodyFat, $monthBodyFat, $monthAverage, $fullPeriodLabel];
-    }
-
-    private function getYearData($user, $today)
-    {
-        $yearLabels = [];
-        $yearBodyFat = [];
-        $yearMonths = [];
-
-        $records = Record::where('user_id', $user->id)
-            ->whereBetween('date', [$today->copy()->subYear()->addDay(), $today])
-            ->get()
-            ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
-
-        foreach (range(0, 11) as $i) {
-            $month = $today->copy()->subMonths(11 - $i);
-            $key = $month->format('Y-m');
-
-            $yearLabels[] = $month->format('Y年n月');
-            $yearMonths[] = $month->format('n月');
-
-            if (isset($records[$key])) {
-                $weights = $records[$key]->pluck('weight')->toArray();
-                $bodyFats = array_map(fn($w) => round($this->calcBodyFat($w, $user->height, $user->birth_date->age, $user->gender), 1), $weights);
-                $valid = array_filter($bodyFats, fn($v) => !is_null($v));
-                $yearBodyFat[] = !empty($valid) ? round(array_sum($valid) / count($valid), 1) : null;
-            } else {
-                $yearBodyFat[] = null;
-            }
-        }
-
-        $validYear = array_filter($yearBodyFat, fn($v) => !is_null($v));
-        $yearAverage = !empty($validYear) ? round(array_sum($validYear) / count($validYear), 1) : null;
-
-        return [$yearLabels, $yearMonths, $yearBodyFat, $yearAverage];
+        $filtered = array_filter($values, fn($v) => $v !== null);
+        return !empty($filtered) ? round(array_sum($filtered) / count($filtered), 1) : null;
     }
 }

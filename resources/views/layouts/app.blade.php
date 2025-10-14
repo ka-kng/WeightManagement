@@ -19,7 +19,7 @@
 </head>
 
 <body class=" pb-28">
-    <header class="p-6 flex items-center justify-between w-full bg-blue-500 text-white">
+    <header class="fixed top-0 z-50 left-0 p-6 flex items-center justify-between w-full bg-blue-500 text-white">
         <div>
             <a href="{{ route('home.index') }}" class="text-lg text-lg font-bold">体重管理アプリ</a>
         </div>
@@ -50,7 +50,7 @@
         </div>
     </header>
 
-    <main>
+    <main class="pt-24">
         @yield('content')
     </main>
 

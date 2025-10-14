@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class MypageController extends Controller
 {
@@ -30,5 +31,26 @@ class MypageController extends Controller
         $user->update($validated);
 
         return redirect()->route('mypage.index')->with('success', 'プロフィールを更新しました');
+    }
+
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = Auth::user();
+
+        // ログアウト
+        Auth::logout();
+
+        // ユーザーを削除
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        // ホームページにリダイレクト
+        return redirect('/')->with('status', 'アカウントが削除されました');
     }
 }

@@ -8,141 +8,129 @@ use Illuminate\Support\Facades\Auth;
 
 class HomeSleepController extends Controller
 {
+    private const DAYS_IN_WEEK = 7;
+    private const WEEKS_IN_MONTH = 4;
+    private const MONTHS_IN_YEAR = 12;
+
     public function show()
     {
         $user = Auth::user();
         $today = Carbon::today();
 
-        // 週データ
-        [$weekLabels, $weekDays, $weekSleep, $weekAverage] = $this->getWeekData($user, $today);
+        // 年間データをまとめて取得
+        $records = $this->getRecordsBetween($user->id, $today->copy()->subYear()->addDay(), $today);
 
-        // 月データ（4週間ごとの平均）
-        [$monthLabels, $monthDaysSleep, $monthSleep, $monthAverage, $fullPeriodLabel] = $this->getMonthData($user, $today);
+        $weekData = $this->getPeriodData($user, $today->copy()->subDays(self::DAYS_IN_WEEK - 1), $today, $records, 'week');
+        $monthData = $this->getMonthlyData($user, $records, $today);
+        $yearData = $this->getYearlyData($user, $records, $today);
 
-        // 年データ（12か月ごとの平均）
-        [$yearLabels, $yearDays, $yearSleep, $yearAverage] = $this->getYearData($user, $today);
-
-        return view('home.chart.sleep', compact(
-            'weekLabels', 'weekDays', 'weekSleep', 'weekAverage',
-            'monthLabels', 'monthDaysSleep', 'monthSleep', 'monthAverage', 'fullPeriodLabel',
-            'yearLabels', 'yearDays', 'yearSleep', 'yearAverage'
-        ));
+        return view('home.chart.sleep', array_merge($weekData, $monthData, $yearData));
     }
 
-    /**
-     * 週データ取得
-     */
-    private function getWeekData($user, Carbon $today)
+    private function getPeriodData($user, Carbon $start, Carbon $end, $records, string $prefix): array
     {
-        $weekLabels = [];
-        $weekDays = [];
-        $weekSleep = [];
+        $labels = $days = $values = [];
 
-        $records = Record::where('user_id', $user->id)
-            ->whereBetween('date', [$today->copy()->subDays(6), $today])
-            ->get()
-            ->keyBy(fn($r) => $r->date->format('Y-m-d'));
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $labels[] = $date->format('n月d日');
+            $days[] = $date->format('j日');
 
-        for ($date = $today->copy()->subDays(6); $date->lte($today); $date->addDay()) {
-            $weekLabels[] = $date->format('n月d日');
-            $weekDays[] = $date->format('j日');
-
-            $key = $date->format('Y-m-d');
-            if (isset($records[$key])) {
-                $r = $records[$key];
-                $weekSleep[] = $r->sleep_hours + ($r->sleep_minutes / 60);
-            } else {
-                $weekSleep[] = null;
-            }
+            $record = $records[$date->format('Y-m-d')] ?? null;
+            $values[] = $record ? $this->sleepDecimal($record) : null;
         }
 
-        $valid = array_filter($weekSleep, fn($v) => !is_null($v));
-        $weekAverage = !empty($valid) ? round(array_sum($valid) / count($valid), 1) : null;
-
-        return [$weekLabels, $weekDays, $weekSleep, $weekAverage];
+        return [
+            "{$prefix}Labels" => $labels,
+            "{$prefix}Days" => $days,
+            "{$prefix}Sleep" => $values,
+            "{$prefix}Average" => $this->calcAverage($values),
+        ];
     }
 
-    /**
-     * 月データ取得（4週間ごとの平均）
-     */
-    private function getMonthData($user, Carbon $today)
+    private function getMonthlyData($user, $records, Carbon $today): array
     {
-        $monthLabels = [];
-        $monthSleep = [];
-        $monthDaysSleep = [];
+        $periodStart = $today->copy()->subDays(self::DAYS_IN_WEEK * self::WEEKS_IN_MONTH - 1);
 
-        $records = Record::where('user_id', $user->id)
-            ->whereBetween('date', [$today->copy()->subDays(27), $today])
-            ->get()
-            ->keyBy(fn($r) => $r->date->format('Y-m-d'));
+        $labels = $weeksValues = $weekAverages = [];
 
-        for ($i = 0; $i < 4; $i++) {
-            $start = $today->copy()->subDays(27)->addDays($i * 7);
-            $end = $start->copy()->addDays(6);
+        for ($i = 0; $i < self::WEEKS_IN_MONTH; $i++) {
+            $start = $periodStart->copy()->addDays($i * self::DAYS_IN_WEEK);
+            $end = $start->copy()->addDays(self::DAYS_IN_WEEK - 1);
 
-            $weekSleep = [];
+            $week = [];
             for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-                $key = $d->format('Y-m-d');
-                if (isset($records[$key])) {
-                    $r = $records[$key];
-                    $weekSleep[] = $r->sleep_hours + ($r->sleep_minutes / 60);
-                } else {
-                    $weekSleep[] = null;
-                }
+                $record = $records[$d->format('Y-m-d')] ?? null;
+                $week[] = $record ? $this->sleepDecimal($record) : null;
             }
 
-            $monthDaysSleep[] = $weekSleep;
-            $monthLabels[] = $start->format('n/j') . '～' . $end->format('n/j');
-            $validWeek = array_filter($weekSleep, fn($v) => !is_null($v));
-            $monthSleep[] = !empty($validWeek) ? round(array_sum($validWeek) / count($validWeek), 1) : null;
+            $weeksValues[] = $week;
+            $labels[] = $start->format('n/j') . '～' . $end->format('n/j');
+            $weekAverages[] = $this->calcAverage($week);
         }
 
-        $fullPeriodLabel = $today->copy()->subDays(27)->format('n月j日') . '～' . $end->format('n月j日');
-
-        $validMonth = array_filter($monthSleep, fn($v) => !is_null($v));
-        $monthAverage = !empty($validMonth) ? round(array_sum($validMonth) / count($validMonth), 1) : null;
-
-        return [$monthLabels, $monthDaysSleep, $monthSleep, $monthAverage, $fullPeriodLabel];
+        return [
+            'monthLabels' => $labels,
+            'monthDaysSleep' => $weeksValues,
+            'monthSleep' => $weekAverages,
+            'monthAverage' => $this->calcAverage($weekAverages),
+            'fullPeriodLabel' => $periodStart->format('n月j日') . '～' . $today->format('n月j日'),
+        ];
     }
 
-    /**
-     * 年データ取得（12か月ごとの平均）
-     */
-    private function getYearData($user, Carbon $today)
+
+    private function getYearlyData($user, $records, Carbon $today): array
     {
-        $yearLabels = [];
-        $yearDays = [];
-        $yearSleep = [];
+        $start = $today->copy()->subMonths(self::MONTHS_IN_YEAR - 1)->startOfMonth();
 
-        $records = Record::where('user_id', $user->id)
-            ->whereBetween('date', [$today->copy()->subYear()->addDay(), $today])
-            ->get()
-            ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
+        $recordsByMonth = $records->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
 
-        foreach (range(0, 11) as $i) {
-            $month = $today->copy()->subMonths(11 - $i);
+        $labels = $months = $values = [];
+
+        for ($i = 0; $i < self::MONTHS_IN_YEAR; $i++) {
+            $month = $start->copy()->addMonths($i);
             $key = $month->format('Y-m');
 
-            $yearLabels[] = $month->format('Y年n月');
-            $yearDays[] = $month->format('n月');
+            $labels[] = $month->format('Y年n月');
+            $months[] = $month->format('n月');
 
-            if (isset($records[$key])) {
-                $weights = $records[$key]->map(fn($r) => $r->sleep_hours + ($r->sleep_minutes / 60))->toArray();
-                $yearSleep[] = round(array_sum($weights) / count($weights), 2);
+            if (isset($recordsByMonth[$key])) {
+                $monthValues = $recordsByMonth[$key]
+                    ->map(fn($r) => $this->sleepDecimal($r))
+                    ->toArray();
+                $values[] = $this->calcAverage($monthValues);
             } else {
-                $yearSleep[] = null;
+                $values[] = null;
             }
         }
 
-        $validYear = array_filter($yearSleep, fn($v) => !is_null($v));
-        $yearAverage = !empty($validYear) ? round(array_sum($validYear) / count($validYear), 2) : null;
-
-        return [$yearLabels, $yearDays, $yearSleep, $yearAverage];
+        return [
+            'yearLabels' => $labels,
+            'yearDays' => $months,
+            'yearSleep' => $values,
+            'yearAverage' => $this->calcAverage($values),
+        ];
     }
 
-    /**
-     * 時間＋分を「○時間○分」に変換
-     */
+    private function getRecordsBetween(int $userId, Carbon $start, Carbon $end)
+    {
+        return Record::where('user_id', $userId)
+            ->whereBetween('date', [$start, $end])
+            ->get()
+            ->keyBy(fn($r) => $r->date->format('Y-m-d'));
+    }
+
+    private function calcAverage(array $values): ?float
+    {
+        $filtered = array_filter($values, fn($v) => !is_null($v));
+        return !empty($filtered) ? round(array_sum($filtered) / count($filtered), 1) : null;
+    }
+
+
+    private function sleepDecimal($record): float
+    {
+        return $record->sleep_hours + ($record->sleep_minutes / 60);
+    }
+
     public static function formatHoursMinutes($decimal)
     {
         if (is_null($decimal)) return '-';

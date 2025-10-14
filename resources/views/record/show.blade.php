@@ -5,7 +5,7 @@
         <div class="flex justify-between items-center mt-3">
 
             <div>
-                <a href="{{  route('records.index') }}" class="hover:text-blue-500 text-xl underline">戻る</a>
+                <a href="{{ route('records.index') }}" class="hover:text-blue-500 text-xl underline">戻る</a>
             </div>
 
             <div class="flex items-center gap-5 text-xl">
@@ -13,7 +13,8 @@
                     <button @click="open = true" class="text-red-600">削除する</button>
 
                     <!-- モーダル -->
-                    <div x-show="open" class="fixed px-3 inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div x-show="open"
+                        class="fixed px-3 inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div class="bg-white rounded-lg p-6 w-96">
                             <p class="mb-4 text-center text-gray-700">本当に削除しますか？</p>
                             <div class="flex justify-end space-x-2">
@@ -53,11 +54,11 @@
                     <p class="font-medium text-lg">睡眠時間：{{ $record->sleep_hours }}時間{{ $record->sleep_minutes }}分</p>
                 </div>
 
-                <div class="">
+                <div>
                     <p class="font-medium text-lg">摂取内容：</p>
                     <p class="grid grid-cols-3 gap-3">
-                        @if ($record->meals)
-                            @foreach (json_decode($record->meals, true) as $meal)
+                        @if ($record->meals && count($record->meals))
+                            @foreach ($record->meals as $meal)
                                 <span class="px-2 py-1 mt-2 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
                                     {{ $meal }}
                                 </span>
@@ -70,14 +71,13 @@
 
                 <div>
                     <p class="font-medium text-lg">食事の詳細：</p>
-                    <p>{{ $record->meal_detail }}</p>
+                    <p>{{ $record->meal_detail ?? '-' }}</p>
                 </div>
 
                 <div class="swiper mySwiper">
                     <p class="font-medium text-lg">食事の写真：</p>
-
                     <div class="swiper-wrapper">
-                        @foreach (json_decode($record->meal_photos ?? '[]', true) as $photo)
+                        @foreach ($record->meal_photos ?? [] as $photo)
                             <div class="swiper-slide flex justify-center items-center">
                                 <img src="{{ asset("storage/$photo") }}" class="w-full max-h-80 object-contain rounded-lg">
                             </div>
@@ -89,17 +89,14 @@
                     <div
                         class="swiper-button-next md:block opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto">
                     </div>
-
-                    <!-- ページネーション -->
                     <div class="swiper-pagination mt-2"></div>
-
                 </div>
 
-                <div class="">
+                <div>
                     <p class="font-medium text-lg">運動内容：</p>
                     <p class="grid grid-cols-3 gap-3 mt-2">
-                        @if ($record->exercises)
-                            @foreach (json_decode($record->exercises, true) as $exercise)
+                        @if ($record->exercises && count($record->exercises))
+                            @foreach ($record->exercises as $exercise)
                                 <span class="px-2 py-1 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
                                     {{ $exercise }}
                                 </span>
@@ -109,12 +106,6 @@
                         @endif
                     </p>
                 </div>
-
-                <div>
-                    <p class="font-medium text-lg">運動の詳細：</p>
-                    <p>{{ $record->meal_detail }}</p>
-                </div>
-
             </div>
         </div>
 

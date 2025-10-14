@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class HomeWeightController extends Controller
 {
+    private const DAYS_IN_WEEK = 7;
+    private const WEEKS_IN_MONTH = 4;
+    private const DAYS_IN_MONTH = self::DAYS_IN_WEEK * self::WEEKS_IN_MONTH;
+    private const MONTHS_IN_YEAR = 12;
+
     public function show()
     {
         $userId = Auth::id();
@@ -41,46 +46,40 @@ class HomeWeightController extends Controller
 
     private function getWeekData($userId, Carbon $today)
     {
-        $weekLabels = [];
-        $weekDays = [];
-        $weekWeights = [];
-
         $records = Record::where('user_id', $userId)
             ->whereBetween('date', [$today->copy()->subDays(6), $today])
             ->get()
             ->keyBy(fn($r) => $r->date->format('Y-m-d'));
 
+        $weekLabels = [];
+        $weekDays = [];
+        $weekWeights = [];
+
         for ($date = $today->copy()->subDays(6); $date->lte($today); $date->addDay()) {
+            $key = $date->format('Y-m-d');
+
             $weekLabels[] = $date->format('n月d日'); // 上部表示
             $weekDays[] = $date->format('j日');      // x軸用
-            $key = $date->format('Y-m-d');
             $weekWeights[] = $records[$key]->weight ?? null;
         }
 
-        $validWeights = array_filter($weekWeights);
-
-        $weekAverage = !empty($validWeights)
-            ? round(array_sum($validWeights) / count($validWeights), 1)
-            : null;
-
-
-        return [$weekLabels, $weekDays, $weekWeights, $weekAverage];
+        return [$weekLabels, $weekDays, $weekWeights, $this->calcAverage($weekWeights)];
     }
 
     private function getMonthData($userId, Carbon $today)
     {
-        $monthLabels = [];
-        $monthWeights = [];
-
-        $periodStart = $today->copy()->subDays(27); // 過去28日
+        $periodStart = $today->copy()->subDays(self::DAYS_IN_MONTH - 1);
         $records = Record::where('user_id', $userId)
             ->whereBetween('date', [$periodStart, $today])
             ->get()
             ->keyBy(fn($r) => $r->date->format('Y-m-d'));
 
-        for ($i = 0; $i < 4; $i++) {
-            $start = $today->copy()->subDays(27)->addDays($i * 7);
-            $end = $start->copy()->addDays(6);
+        $monthLabels = [];
+        $monthWeights = [];
+
+        for ($i = 0; $i < self::WEEKS_IN_MONTH; $i++) {
+            $start = $periodStart->copy()->addDays($i * self::DAYS_IN_WEEK);
+            $end = $start->copy()->addDays(self::DAYS_IN_WEEK - 1);
 
             $weekWeights = [];
             for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
@@ -91,28 +90,31 @@ class HomeWeightController extends Controller
             }
 
             $monthLabels[] = $start->format('n/d') . '～' . $end->format('n/d');
-            $monthWeights[] = !empty($weekWeights) ? round(array_sum($weekWeights) / count($weekWeights), 1) : null;
-            $monthAverage = !empty(array_filter($monthWeights)) ? round(array_sum(array_filter($monthWeights)) / count(array_filter($monthWeights)), 1) : null;
+            $monthWeights[] = $this->calcAverage($weekWeights);
         }
 
         $fullPeriodLabel = $periodStart->format('n月d日') . ' ～ ' . $end->format('n月d日');
+        $monthAverage = $this->calcAverage($monthWeights);
 
         return [$monthLabels, $monthWeights, $fullPeriodLabel, $monthAverage];
     }
 
     private function getYearData($userId, Carbon $today)
     {
+        $start = $today->copy()->subMonths(self::MONTHS_IN_YEAR - 1)->startOfMonth();
+        $end = $today->copy()->endOfMonth();
+
+        $records = Record::where('user_id', $userId)
+            ->whereBetween('date', [$start, $end])
+            ->get()
+            ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
+
         $yearLabels = [];
         $yearDays = [];
         $yearWeights = [];
 
-        $records = Record::where('user_id', $userId)
-            ->whereBetween('date', [$today->copy()->subYear()->addDay(), $today])
-            ->get()
-            ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
-
-        foreach (range(0, 11) as $i) {
-            $month = $today->copy()->subMonths(11 - $i);
+        for ($i = 0; $i < self::MONTHS_IN_YEAR; $i++) {
+            $month = $start->copy()->addMonths($i);
             $key = $month->format('Y-m');
 
             $yearLabels[] = $month->format('Y年n月');
@@ -120,14 +122,20 @@ class HomeWeightController extends Controller
 
             if (isset($records[$key])) {
                 $weights = $records[$key]->pluck('weight')->toArray();
-                $yearWeights[] = round(array_sum($weights) / count($weights), 1);
             } else {
-                $yearWeights[] = null;
+                $weights = [];
             }
-
-            $yearAverage = !empty(array_filter($yearWeights)) ? round(array_sum(array_filter($yearWeights)) / count(array_filter($yearWeights)), 1) : null;
+            $yearWeights[] = $this->calcAverage($weights);
         }
 
+        $yearAverage = $this->calcAverage($yearWeights);
+
         return [$yearLabels, $yearDays, $yearWeights, $yearAverage];
+    }
+
+    private function calcAverage(array $value)
+    {
+        $filtered = array_filter($value, fn($v) => $v !== null);
+        return !empty($filtered) ? round(array_sum($filtered) / count($filtered), 1) : null;
     }
 }

@@ -3,28 +3,36 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\URL;
 
 class VerifyEmailController extends Controller
 {
-    /**
-     * Mark the authenticated user's email address as verified.
-     */
-    public function __invoke(EmailVerificationRequest $request): RedirectResponse
+    public function __invoke($id, $hash)
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        $user = User::findOrFail($id);
+
+        // URL署名チェック（改ざん防止）
+        if (! URL::hasValidSignature(request())) {
+            abort(403, '無効なリンクです');
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
+        // ハッシュチェック（本人確認）
+        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+            abort(403, '無効なリンクです');
         }
 
-        return redirect()->intended(route('record.index', absolute: false).'?verified=1');
+        // 未認証なら更新
+        if (! $user->hasVerifiedEmail()) {
+            $user->email_verified_at = now();
+            $user->save();
 
-        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+            // イベントを発生させる
+            event(new Verified($user));
+        }
 
+        // メール認証が成功した後のリダイレクト
+        return redirect()->route('login')->with('verified', true);
     }
 }

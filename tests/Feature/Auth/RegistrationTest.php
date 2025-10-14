@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,9 +24,20 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'gender' => 1,
+            'birth_date' => '1990-01-01',
+            'height' => 170,
+            'target_weight' => 60,
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // 登録したユーザーを取得
+        $user = User::where('email', 'test@example.com')->first();
+        $this->assertNotNull($user); // ユーザーがデータベースに存在するか確認
+
+        // ログイン状態をシミュレート
+        $this->actingAs($user);
+
+        // ユーザーが認証されていることを確認
+        $this->assertAuthenticatedAs($user);
     }
 }

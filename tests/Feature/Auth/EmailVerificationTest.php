@@ -13,32 +13,35 @@ class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_email_verification_screen_can_be_rendered(): void
-    {
-        $user = User::factory()->unverified()->create();
-
-        $response = $this->actingAs($user)->get('/verify-email');
-
-        $response->assertStatus(200);
-    }
-
     public function test_email_can_be_verified(): void
     {
+        // 未認証のユーザーを作成
         $user = User::factory()->unverified()->create();
 
+        // イベントをモック
         Event::fake();
 
+        // ログイン状態を作成
+        $this->actingAs($user);
+
+        // 認証用URLを生成
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
             ['id' => $user->id, 'hash' => sha1($user->email)]
         );
 
-        $response = $this->actingAs($user)->get($verificationUrl);
+        // 認証用URLにアクセス
+        $response = $this->get($verificationUrl);
+
+        // メール認証が成功しているかを確認
+        $user->refresh(); // 最新状態を取得
+        $this->assertTrue($user->hasVerifiedEmail());
 
         Event::assertDispatched(Verified::class);
-        $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+
+        // 正しいリダイレクト先にリダイレクトされているかを確認
+        $response->assertRedirect(route('login', absolute: false));
     }
 
     public function test_email_is_not_verified_with_invalid_hash(): void

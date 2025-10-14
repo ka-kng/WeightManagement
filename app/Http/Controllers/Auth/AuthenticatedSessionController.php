@@ -23,10 +23,13 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         if (is_null($user->email_verified_at)) {
+            $user->sendEmailVerificationNotification();
+
             Auth::logout();
-            return back()->withErrors([
-                'email' => 'メール認証が完了していません。',
-            ]);
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('resent', true);
         }
 
         $request->session()->regenerate();

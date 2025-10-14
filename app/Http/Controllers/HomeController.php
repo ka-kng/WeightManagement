@@ -3,19 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Record;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
-    // 性別定数
     private const GENDER_MALE = 1;
     private const GENDER_FEMALE = 2;
 
-    // BMI・体脂肪率計算定数
-    private const BODY_FAT_BASE        = 3.02;
+    // 体脂肪率計算定数
+    private const BODY_FAT_BASE         = 3.02;
     private const BODY_FAT_WEIGHT_COEFF = 0.461;
     private const BODY_FAT_HEIGHT_COEFF = 0.089;
     private const BODY_FAT_AGE_COEFF    = 0.038;
@@ -30,29 +26,33 @@ class HomeController extends Controller
             ->first();
 
         if ($record) {
-            $user = $record->user;
-            $age = $user->birth_date->age;
-
-            // BMI計算
-            $record->bmi = $record->weight / (($user->height / 100) ** 2);
-
-            $genderValue = ($user->gender == self::GENDER_MALE) ? 1 : 0;
-
-            $bodyFatNumerator =
-                self::BODY_FAT_BASE +
-                self::BODY_FAT_WEIGHT_COEFF * $record->weight -
-                self::BODY_FAT_HEIGHT_COEFF * $user->height +
-                self::BODY_FAT_AGE_COEFF * $age +
-                self::BODY_FAT_CONST;
-
-            if ($user->gender == self::GENDER_MALE) { // 男性補正
-                $bodyFatNumerator += self::BODY_FAT_MALE_ADJUST;
-            }
-
-            $record->body_fat = ($bodyFatNumerator / $record->weight) * 100;
-        };
+            $record->bmi      = $this->calcBmi($record->weight, optional($record->user)->height);
+            $record->body_fat = $this->calcBodyFat($record->weight, optional($record->user)->height, optional($record->user)->birth_date?->age, optional($record->user)->gender);
+        }
 
         return view('home.index', compact('record'));
     }
 
+    private function calcBmi(?float $weight, ?float $height): ?float
+    {
+        if (!$weight || !$height) return null;
+        return round($weight / (($height / 100) ** 2), 1);
+    }
+
+    private function calcBodyFat(?float $weight, ?float $height, ?int $age, ?int $gender): ?float
+    {
+        if (!$weight || !$height || !$age || !$gender) return null;
+
+        $val = self::BODY_FAT_BASE
+            + self::BODY_FAT_WEIGHT_COEFF * $weight
+            - self::BODY_FAT_HEIGHT_COEFF * $height
+            + self::BODY_FAT_AGE_COEFF * $age
+            + self::BODY_FAT_CONST;
+
+        if ($gender === self::GENDER_MALE) {
+            $val += self::BODY_FAT_MALE_ADJUST;
+        }
+
+        return round(($val / $weight) * 100, 1);
+    }
 }

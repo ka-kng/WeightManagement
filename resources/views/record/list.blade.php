@@ -31,10 +31,14 @@
                     <div class="">
                         <p>摂取内容：</p>
                         <p class="grid grid-cols-3 gap-3 mt-2">
-                            @if ($record->meals)
-                                @foreach ($record->meals as $meal)
+                            @php
+                                $meals = is_string($record->meals) ? json_decode($record->meals, true) : $record->meals;
+                            @endphp
+
+                            @if ($meals && is_array($meals))
+                                @foreach ($meals as $meal)
                                     <span class="px-2 py-1 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
-                                        {{ is_array($meal) ? implode(', ', $meal) : $meal }}
+                                        {{ $meal }}
                                     </span>
                                 @endforeach
                             @else
@@ -46,8 +50,14 @@
                     <div class="">
                         <p>運動内容：</p>
                         <p class="grid grid-cols-3 gap-3 mt-2">
-                            @if ($record->exercises)
-                                @foreach ($record->exercises as $exercise)
+                            @php
+                                $exercises = is_string($record->exercises)
+                                    ? json_decode($record->exercises, true)
+                                    : $record->exercises;
+                            @endphp
+
+                            @if ($exercises && is_array($exercises))
+                                @foreach ($exercises as $exercise)
                                     <span class="px-2 py-1 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
                                         {{ is_array($exercise) ? implode(', ', $exercise) : $exercise }}
                                     </span>

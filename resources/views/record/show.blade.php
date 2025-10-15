@@ -57,10 +57,14 @@
                 <div>
                     <p class="font-medium text-lg">摂取内容：</p>
                     <p class="grid grid-cols-3 gap-3">
-                        @if ($record->meals && count($record->meals))
-                            @foreach ($record->meals as $meal)
+                        @php
+                            $meals = is_string($record->meals) ? json_decode($record->meals, true) : $record->meals;
+                        @endphp
+
+                        @if (!empty($meals) && is_array($meals))
+                            @foreach ($meals as $meal)
                                 <span class="px-2 py-1 mt-2 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
-                                    {{ $meal }}
+                                    {{ is_array($meal) ? implode(', ', $meal) : $meal }}
                                 </span>
                             @endforeach
                         @else
@@ -76,13 +80,27 @@
 
                 <div class="swiper mySwiper">
                     <p class="font-medium text-lg">食事の写真：</p>
+
+                    @php
+                        // JSON文字列かもしれないので decode 安全化
+                        $photos = is_string($record->meal_photos)
+                            ? json_decode($record->meal_photos, true)
+                            : $record->meal_photos;
+                    @endphp
+
                     <div class="swiper-wrapper">
-                        @foreach ($record->meal_photos ?? [] as $photo)
-                            <div class="swiper-slide flex justify-center items-center">
-                                <img src="{{ asset("storage/$photo") }}" class="w-full max-h-80 object-contain rounded-lg">
-                            </div>
-                        @endforeach
+                        @if (!empty($photos) && is_array($photos))
+                            @foreach ($photos as $photo)
+                                <div class="swiper-slide flex justify-center items-center">
+                                    <img src="{{ asset("storage/$photo") }}"
+                                        class="w-full max-h-80 object-contain rounded-lg">
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-gray-500 mt-2">写真なし</div>
+                        @endif
                     </div>
+
                     <div
                         class="swiper-button-prev md:block opacity-0 md:opacity-100 pointer-events-none md:pointer-events-auto">
                     </div>
@@ -92,13 +110,24 @@
                     <div class="swiper-pagination mt-2"></div>
                 </div>
 
+                <div class="mt-3">
+                    <p class="font-medium text-lg">運動の詳細：</p>
+                    <p>{{ $record->exercise_detail ?? '-' }}</p>
+                </div>
+
                 <div>
                     <p class="font-medium text-lg">運動内容：</p>
                     <p class="grid grid-cols-3 gap-3 mt-2">
-                        @if ($record->exercises && count($record->exercises))
-                            @foreach ($record->exercises as $exercise)
+                        @php
+                            $exercises = is_string($record->exercises)
+                                ? json_decode($record->exercises, true)
+                                : $record->exercises;
+                        @endphp
+
+                        @if (!empty($exercises) && is_array($exercises))
+                            @foreach ($exercises as $exercise)
                                 <span class="px-2 py-1 text-sm bg-blue-50 text-blue-700 rounded-full text-center">
-                                    {{ $exercise }}
+                                    {{ is_array($exercise) ? implode(', ', $exercise) : $exercise }}
                                 </span>
                             @endforeach
                         @else
@@ -106,6 +135,7 @@
                         @endif
                     </p>
                 </div>
+
             </div>
         </div>
 

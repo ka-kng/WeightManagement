@@ -70,7 +70,16 @@
 
                     @php
                         $meals = ['炭水化物', 'タンパク質', '脂質', 'ビタミン', 'ミネラル'];
-                        $selectedMeals = old('meals', $record->meals ? json_decode($record->meals, true) : []);
+
+                        // mealsが文字列ならjson_decode、配列ならそのまま、nullなら空配列
+                        $recordMeals = $record->meals;
+                        if (is_string($recordMeals)) {
+                            $recordMeals = json_decode($recordMeals, true);
+                        }
+                        $recordMeals = is_array($recordMeals) ? $recordMeals : [];
+
+                        // oldがある場合はそちらを優先
+                        $selectedMeals = old('meals', $recordMeals);
                     @endphp
 
                     @foreach ($meals as $meal)
@@ -117,14 +126,20 @@
                 <div class="grid grid-cols-3 mt-3">
 
                     @php
-                        $exercises = ['有酸素運動', '筋トレ', 'ストレッチ', 'ヨガ', 'スポーツ'];
-                        $selectedExercises = old(
-                            'exercises',
-                            $record->exercises ? json_decode($record->exercises, true) : [],
-                        );
+                        $exercisesList = ['有酸素運動', '筋トレ', 'ストレッチ', 'ヨガ', 'スポーツ'];
+
+                        // exercisesが文字列ならjson_decode、配列ならそのまま、nullなら空配列
+                        $recordExercises = $record->exercises;
+                        if (is_string($recordExercises)) {
+                            $recordExercises = json_decode($recordExercises, true);
+                        }
+                        $recordExercises = is_array($recordExercises) ? $recordExercises : [];
+
+                        // oldがあれば優先
+                        $selectedExercises = old('exercises', $recordExercises);
                     @endphp
 
-                    @foreach ($exercises as $exercise)
+                    @foreach ($exercisesList as $exercise)
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" name="exercises[]" value="{{ $exercise }}"
                                 class="w-3 h-3 rounded-full text-blue-600 focus:ring-blue-500"

@@ -68,15 +68,15 @@
 
             <div class="mt-4">
                 <label for="password" class="block">現在のパスワード</label>
-                <input type="password" name="password" id="password" class="rounded w-full p-2 border">
+                <div class="flex justify-between gap-3 mt-2">
+                    <input type="password" name="password" id="password" class="rounded w-full p-2 border">
+                    <button type="submit" class="bg-red-500 text-white p-2 rounded hover:bg-red-600 w-20 xl:w-40">削除</button>
+                </div>
             </div>
             @error('password')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
 
-            <div class="flex justify-end mt-6">
-                <button type="submit" class="bg-red-500 text-white p-2 rounded hover:bg-red-600">削除</button>
-            </div>
         </form>
 
     </div>

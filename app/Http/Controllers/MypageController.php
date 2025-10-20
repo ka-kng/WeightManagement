@@ -2,55 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\MypageUpdateRequest;
+use App\Services\MypageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class MypageController extends Controller
 {
+    private MypageService $mypageService;
+
+    public function __construct(MypageService $mypageService)
+    {
+        $this->mypageService = $mypageService;
+    }
+
+    // マイページプロフィール画面
     public function index()
     {
-        $user = Auth::user();
+        $user = $this->mypageService->getCurrentUser();
         return view('mypage.profile', compact('user'));
     }
 
-    public function update(Request $request)
+    // プロフィール更新
+    public function update(MypageUpdateRequest $request)
     {
-        $user = Auth::user();
+        $data = $request->validated();
+        $this->mypageService->updateProfile($data);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'birth_date' => ['required', 'date'],
-            'height' => ['required', 'numeric'],
-            'target_weight' => ['required', 'numeric'],
-            'gender' => ['required'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-        ]);
-
-        $user->update($validated);
-
-        return redirect()->route('mypage.index')->with('success', 'プロフィールを更新しました');
+        return redirect()->route('mypage.index')
+            ->with('success', 'プロフィールを更新しました');
     }
 
+    // アカウント削除
     public function destroy(Request $request)
     {
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = Auth::user();
+        $password = $request->input('password');
 
-        // ログアウト
-        Auth::logout();
-
-        // ユーザーを削除
-        $user->delete();
+        // サービスに削除処理を委譲（パスワードチェック含む）
+        $this->mypageService->deleteAccount($password);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // ホームページにリダイレクト
         return redirect('/')->with('status', 'アカウントが削除されました');
     }
 }

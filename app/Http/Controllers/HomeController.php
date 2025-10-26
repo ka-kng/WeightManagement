@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Auth;
 class HomeController extends Controller
 {
     private const GENDER_MALE = 1;
-    private const GENDER_FEMALE = 2;
 
     // 体脂肪率計算定数
     private const BODY_FAT_BASE         = 3.02;
@@ -25,20 +24,28 @@ class HomeController extends Controller
             ->orderBy('date', 'desc')
             ->first();
 
+        // レコードが存在する場合のみ以下を実行 null の場合でも安全にアクセス
         if ($record) {
-            $record->bmi      = $this->calcBmi($record->weight, optional($record->user)->height);
-            $record->body_fat = $this->calcBodyFat($record->weight, optional($record->user)->height, optional($record->user)->birth_date?->age, optional($record->user)->gender);
+            $record->bmi      = $this->calcBmi($record->weight, optional($record->user)->height); // BMI計算
+            $record->body_fat = $this->calcBodyFat(
+                $record->weight,
+                optional($record->user)->height,
+                optional($record->user)->birth_date?->age,
+                optional($record->user)->gender
+            ); // 体脂肪率計算
         }
 
         return view('home.index', compact('record'));
     }
 
+    // bmi計算
     private function calcBmi(?float $weight, ?float $height): ?float
     {
         if (!$weight || !$height) return null;
         return round($weight / (($height / 100) ** 2), 1);
     }
 
+    //体脂肪計算
     private function calcBodyFat(?float $weight, ?float $height, ?int $age, ?int $gender): ?float
     {
         if (!$weight || !$height || !$age || !$gender) return null;

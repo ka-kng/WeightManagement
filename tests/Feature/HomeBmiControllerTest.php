@@ -30,7 +30,6 @@ class HomeBmiControllerTest extends TestCase
             'weekBmis',
             'weekAverage',
             'monthLabels',
-            'monthDays',
             'monthBmis',
             'monthAverage',
             'fullPeriodLabel',

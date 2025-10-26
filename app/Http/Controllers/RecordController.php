@@ -35,6 +35,8 @@ class RecordController extends Controller
     public function store(RecordRequest $request)
     {
         $data = $request->validated();
+
+        // アップロードされたファイルを取得
         $files = $request->file('meal_photos') ?? [];
         $files = is_array($files) ? $files : [$files];
 
@@ -59,6 +61,8 @@ class RecordController extends Controller
     public function update(RecordRequest $request, Record $record)
     {
         $data = $request->validated();
+
+         // アップロードされたファイルを取得
         $files = $request->file('meal_photos') ?? [];
         $files = is_array($files) ? $files : [$files];
 

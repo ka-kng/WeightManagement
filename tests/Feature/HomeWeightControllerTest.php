@@ -22,7 +22,7 @@ class HomeWeightControllerTest extends TestCase
         $mockService = Mockery::mock(HomeWeightService::class);
         $mockService->shouldReceive('getWeightData')
             ->once()
-            ->with($user->id)
+            ->with($user)
             ->andReturn([
                 'week' => [
                     'weights' => [60, 61],

@@ -16,8 +16,8 @@ class HomeWeightController extends Controller
 
     public function show()
     {
-        $userId = Auth::id();
-        $data = $this->weightService->getWeightData($userId);
+        $user = Auth::user();
+        $data = $this->weightService->getWeightData($user);
 
         return view('home.chart.weight', [
             'weekLabels' => $data['week']['labels'],

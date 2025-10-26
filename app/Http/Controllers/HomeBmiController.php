@@ -28,7 +28,6 @@ class HomeBmiController extends Controller
             'weekAverage' => $data['week']['average'],
 
             'monthLabels' => $data['month']['labels'],
-            'monthDays' => $data['month']['days'] ?? [],
             'monthBmis' => $data['month']['bmis'],
             'monthAverage' => $data['month']['average'],
             'fullPeriodLabel' => $data['month']['fullPeriodLabel'],

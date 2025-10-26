@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Record;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class HomeWeightService
 {
@@ -13,27 +14,31 @@ class HomeWeightService
   private const DAYS_IN_MONTH = self::DAYS_IN_WEEK * self::WEEKS_IN_MONTH;
   private const MONTHS_IN_YEAR = 12;
 
-  // 週・月・年の体重データをまとめて取得
-  public function getWeightData(int $userId)
+  // 体重データを「週・月・年」単位でまとめて取得
+  // キャッシュ（6時間）を使ってパフォーマンスを向上
+  public function getWeightData($user)
   {
     $today = Carbon::today();
+    $cacheKey = "weight_data_user_{$user->id}";
 
-    return [
-      'week' => $this->getWeekData($userId, $today),   // 直近1週間分
-      'month' => $this->getMonthData($userId, $today), // 直近4週間分
-      'year' => $this->getYearData($userId, $today),   // 直近1年分
-    ];
+    return Cache::remember($cacheKey, now()->addHours(6), function () use ($user, $today) {
+      $records = $this->getRecordsBetween(
+        $user->id,
+        $today->copy()->subYear()->addDay(),
+        $today
+      );
+
+      return [
+        'week' => $this->getWeekData($records, $today),   // 直近1週間分
+        'month' => $this->getMonthData($records, $today), // 直近4週間分
+        'year' => $this->getYearData($records, $today),   // 直近1年分
+      ];
+    });
   }
 
   // 直近1週間の体重データを取得
-  private function getWeekData(int $userId, Carbon $today)
+  private function getWeekData($records, Carbon $today)
   {
-    // 7日分のデータを取得（今日含む）
-    $records = Record::where('user_id', $userId)
-      ->whereBetween('date', [$today->copy()->subDays(self::DAYS_IN_WEEK - 1), $today])
-      ->get()
-      ->keyBy(fn($r) => $r->date->format('Y-m-d')); // 日付をキーにする
-
     $labels = [];
     $days = [];
     $weights = [];
@@ -55,15 +60,9 @@ class HomeWeightService
   }
 
   // 直近1ヶ月（4週間）の体重データを取得
-  private function getMonthData(int $userId, Carbon $today)
+  private function getMonthData($records, Carbon $today)
   {
     $periodStart = $today->copy()->subDays(self::DAYS_IN_MONTH - 1);
-
-    // 対象期間のデータを取得
-    $records = Record::where('user_id', $userId)
-      ->whereBetween('date', [$periodStart, $today])
-      ->get()
-      ->keyBy(fn($r) => $r->date->format('Y-m-d'));
 
     $labels = [];
     $weights = [];
@@ -103,15 +102,12 @@ class HomeWeightService
   }
 
   // 直近1年間（12か月）の体重データを取得
-  private function getYearData(int $userId, Carbon $today)
+  private function getYearData($records, Carbon $today)
   {
     $start = $today->copy()->subMonths(self::MONTHS_IN_YEAR - 1)->startOfMonth();
-    $end = $today->copy()->endOfMonth();
 
-    $records = Record::where('user_id', $userId)
-      ->whereBetween('date', [$start, $end])
-      ->get()
-      ->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
+    // Collection で月ごとにグループ化（"2025-10" のようにまとめる）
+    $recordsByMonth = collect($records)->groupBy(fn($r) => $r->date->format('Y-m'));
 
     $labels = [];
     $days = [];
@@ -124,8 +120,8 @@ class HomeWeightService
       $labels[] = $month->format('Y年n月'); // 表示用
       $days[] = $month->format('n月');
 
-      $monthWeights = isset($records[$key])
-        ? $records[$key]->pluck('weight')->toArray()
+      $monthWeights = isset($recordsByMonth[$key])
+        ? $recordsByMonth[$key]->pluck('weight')->toArray()
         : [];
 
       $weights[] = $this->calcAverage($monthWeights); // 月平均
@@ -139,6 +135,15 @@ class HomeWeightService
       'weights' => $weights,
       'average' => $yearAverage,
     ];
+  }
+
+  // 日付をキーにした連想配列で返す
+  private function getRecordsBetween(int $userId, Carbon $start, Carbon $end)
+  {
+    return Record::where('user_id', $userId)
+      ->whereBetween('date', [$start, $end])
+      ->get()
+      ->keyBy(fn($r) => $r->date->format('Y-m-d'));
   }
 
   // 平均値を計算（nullを除外）

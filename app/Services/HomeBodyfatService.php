@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Record;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class HomeBodyfatService
 {
@@ -23,28 +24,34 @@ class HomeBodyfatService
     private const WEEKS_IN_MONTH = 4;
     private const MONTHS_IN_YEAR = 12;
 
-    // 指定ユーザーの体脂肪データを週・月・年単位でまとめて取得
+    // 体脂肪率データを「週・月・年」単位でまとめて取得
+    // キャッシュ（6時間）を使ってパフォーマンスを向上
     public function getBodyFatData($user)
     {
-        $today = Carbon::today(); // 今日の日付を取得
+        // 今日の日付を取得
+        $today = Carbon::today();
 
-        // 過去1年分のレコードを一括取得してキャッシュ
-        // 毎回DBに問い合わせるより効率的
-        $records = $this->getRecordsBetween(
-            $user->id,
-            $today->copy()->subYear()->addDay(), // 過去365日分
-            $today
-        );
+        // キャッシュのキーを作成
+        $cacheKey = "bodyfat_data_user_{$user->id}";
 
-        // それぞれの期間のデータを取得して配列としてまとめる
-        return [
-            'week' => $this->getWeeklyData($user, $records, $today),
-            'month' => $this->getMonthlyData($user, $records, $today),
-            'year' => $this->getYearlyData($user, $records, $today),
-        ];
+        // キャッシュにデータがあればそれを返す
+        // なければクロージャ内の処理を実行してキャッシュに保存（6時間有効）
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($user, $today) {
+            $records = $this->getRecordsBetween(
+                $user->id,
+                $today->copy()->subYear()->addDay(),
+                $today
+            );
+
+            return [
+                'week' => $this->getWeeklyData($user, $records, $today),
+                'month' => $this->getMonthlyData($user, $records, $today),
+                'year' => $this->getYearlyData($user, $records, $today),
+            ];
+        });
     }
 
-    // 直近1週間の体脂肪率データを取得
+    // 週のデータ取得
     private function getWeeklyData($user, $records, Carbon $today): array
     {
         $start = $today->copy()->subDays(self::DAYS_IN_WEEK - 1); // 7日前から今日まで
@@ -74,11 +81,13 @@ class HomeBodyfatService
     // 直近1ヶ月（4週間）の体脂肪率データを取得
     private function getMonthlyData($user, $records, Carbon $today): array
     {
+        // 直近4週間分を集計対象にする
         $periodStart = $today->copy()->subDays(self::DAYS_IN_WEEK * self::WEEKS_IN_MONTH - 1);
         $labels = [];        // 各週のラベル
         $weeksBodyFat = [];  // 日ごとの体脂肪率配列を格納
         $monthBodyFat = [];  // 週ごとの平均体脂肪率
 
+        // 各週ごとに処理（4週分）
         for ($i = 0; $i < self::WEEKS_IN_MONTH; $i++) {
             $start = $periodStart->copy()->addDays($i * self::DAYS_IN_WEEK);
             $end = $start->copy()->addDays(self::DAYS_IN_WEEK - 1);
@@ -113,9 +122,10 @@ class HomeBodyfatService
         $months = [];    // x軸用ラベル（例：10月）
         $bodyFat = [];   // 各月の平均体脂肪率
 
-        // 月単位にレコードをグループ化
+        // 月単位にグループ化（"2025-10" のようなキーでまとめる）
         $recordsByMonth = $records->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
 
+        // 各月ごとに処理
         for ($i = 0; $i < self::MONTHS_IN_YEAR; $i++) {
             $month = $start->copy()->addMonths($i);
             $key = $month->format('Y-m');
@@ -151,7 +161,7 @@ class HomeBodyfatService
             ->keyBy(fn($r) => $r->date->format('Y-m-d'));
     }
 
-    // レコードから体脂肪率を計算
+    // 1日のレコードから体脂肪率を算出
     private function calcBodyFatFromRecord($record, $user): ?float
     {
         if (!$record) return null;

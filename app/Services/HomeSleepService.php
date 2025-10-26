@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Record;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class HomeSleepService
 {
@@ -17,23 +18,28 @@ class HomeSleepService
     {
         $today = Carbon::today();
 
-        // 過去1年分のデータを取得してキャッシュ
-        $records = $this->getRecordsBetween(
-            $user->id,
-            $today->copy()->subYear()->addDay(),
-            $today
-        );
+        $cacheKey = "sleep_data_user_{$user->id}";
 
-        // 週・月・年単位でデータをまとめる
-        return [
-            'week' => $this->getPeriodData($user, $today->copy()->subDays(self::DAYS_IN_WEEK - 1), $today, $records, 'week'),
-            'month' => $this->getMonthlyData($user, $records, $today),
-            'year' => $this->getYearlyData($user, $records, $today),
-        ];
+        // 睡眠時間データを「週・月・年」単位でまとめて取得
+        // キャッシュ（6時間）を使ってパフォーマンスを向上
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($user, $today) {
+            $records = $this->getRecordsBetween(
+                $user->id,
+                $today->copy()->subYear()->addDay(),
+                $today
+            );
+
+            // 週・月・年単位でデータをまとめる
+            return [
+                'week' => $this->getWeekData($today->copy()->subDays(self::DAYS_IN_WEEK - 1), $today, $records),
+                'month' => $this->getMonthlyData($records, $today),
+                'year' => $this->getYearlyData($records, $today),
+            ];
+        });
     }
 
-    // 任意期間（週単位など）のデータ取得
-    private function getPeriodData($user, Carbon $start, Carbon $end, $records, string $prefix): array
+    // 週のデータ取得
+    private function getWeekData(Carbon $start, Carbon $end, $records): array
     {
         $labels = $days = $values = [];
 
@@ -47,15 +53,15 @@ class HomeSleepService
         }
 
         return [
-            "{$prefix}Labels" => $labels,
-            "{$prefix}Days" => $days,
-            "{$prefix}Sleep" => $values,
-            "{$prefix}Average" => $this->calcAverage($values),
+            "weekLabels" => $labels,
+            "weekDays" => $days,
+            "weekSleep" => $values,
+            "weekAverage" => $this->calcAverage($values),
         ];
     }
 
     // 月間データ取得（直近4週間）
-    private function getMonthlyData($user, $records, Carbon $today): array
+    private function getMonthlyData($records, Carbon $today): array
     {
         $periodStart = $today->copy()->subDays(self::DAYS_IN_WEEK * self::WEEKS_IN_MONTH - 1);
 
@@ -74,12 +80,11 @@ class HomeSleepService
 
             $weeksValues[] = $week;
             $labels[] = $start->format('n/j') . '～' . $end->format('n/j');
-            $weekAverages[] = $this->calcAverage($week);
+            $weekAverages[] = $this->calcAverage($week); // 週平均
         }
 
         return [
             'monthLabels' => $labels,
-            'monthDaysSleep' => $weeksValues,
             'monthSleep' => $weekAverages,
             'monthAverage' => $this->calcAverage($weekAverages),
             'fullPeriodLabel' => $periodStart->format('n月j日') . '～' . $today->format('n月j日'),
@@ -87,14 +92,16 @@ class HomeSleepService
     }
 
     // 年間データ取得（直近12ヶ月）
-    private function getYearlyData($user, $records, Carbon $today): array
+    private function getYearlyData($records, Carbon $today): array
     {
         $start = $today->copy()->subMonths(self::MONTHS_IN_YEAR - 1)->startOfMonth();
 
-        // 月単位にグループ化
+        // 月単位にレコードをグループ化
         $recordsByMonth = $records->groupBy(fn($r) => Carbon::parse($r->date)->format('Y-m'));
 
-        $labels = $months = $values = [];
+        $labels = []; // グラフ上部ラベル（例: 2025年10月）
+        $months = []; // x軸用ラベル（例: 10月）
+        $values = []; // 各月の平均睡眠時間
 
         for ($i = 0; $i < self::MONTHS_IN_YEAR; $i++) {
             $month = $start->copy()->addMonths($i);
@@ -104,10 +111,11 @@ class HomeSleepService
             $months[] = $month->format('n月');
 
             if (isset($recordsByMonth[$key])) {
+                // 月内の全日分を小数形式に変換
                 $monthValues = $recordsByMonth[$key]
                     ->map(fn($r) => $this->sleepDecimal($r))
                     ->toArray();
-                $values[] = $this->calcAverage($monthValues);
+                $values[] = $this->calcAverage($monthValues); // 月平均
             } else {
                 $values[] = null;
             }

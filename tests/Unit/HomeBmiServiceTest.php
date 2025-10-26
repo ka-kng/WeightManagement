@@ -68,7 +68,6 @@ class HomeBmiServiceTest extends TestCase
         $this->assertCount(4, $data['month']['bmis']);
         $this->assertNotNull($data['month']['average']);
         $this->assertCount(4, $data['month']['labels']);
-        $this->assertCount(4, $data['month']['days']);
         $this->assertNotEmpty($data['month']['fullPeriodLabel']);
     }
 

@@ -70,7 +70,6 @@ class HomeSleepServiceTest extends TestCase
         $this->assertCount(4, $data['month']['monthSleep']); // 週平均4件
         $this->assertNotNull($data['month']['monthAverage']);
         $this->assertCount(4, $data['month']['monthLabels']);
-        $this->assertCount(4, $data['month']['monthDaysSleep']);
         $this->assertNotEmpty($data['month']['fullPeriodLabel']);
     }
 

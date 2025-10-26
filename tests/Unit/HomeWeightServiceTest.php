@@ -26,19 +26,18 @@ class HomeWeightServiceTest extends TestCase
     public function test_get_weight_data_returns_correct_structure_for_week()
     {
         $user = User::factory()->create();
-        $userId = $user->id;
         $today = Carbon::today();
 
         // 7日分の体重データ作成
         foreach (range(0, 6) as $i) {
             Record::factory()->create([
-                'user_id' => $userId,
+                'user_id' => $user->id,
                 'date' => $today->copy()->subDays($i),
                 'weight' => 60 + $i,
             ]);
         }
 
-        $data = $this->service->getWeightData($userId);
+        $data = $this->service->getWeightData($user);
 
         $this->assertArrayHasKey('week', $data);
         $this->assertCount(7, $data['week']['weights']);
@@ -50,19 +49,18 @@ class HomeWeightServiceTest extends TestCase
     public function test_get_weight_data_returns_correct_structure_for_month()
     {
         $user = User::factory()->create();
-        $userId = $user->id;
         $today = Carbon::today();
 
         // 28日分（4週間）の体重データ
         foreach (range(0, 27) as $i) {
             Record::factory()->create([
-                'user_id' => $userId,
+                'user_id' => $user->id,
                 'date' => $today->copy()->subDays($i),
                 'weight' => 60 + ($i % 5),
             ]);
         }
 
-        $data = $this->service->getWeightData($userId);
+        $data = $this->service->getWeightData($user);
 
         $this->assertArrayHasKey('month', $data);
         $this->assertCount(4, $data['month']['weights']); // 4週間分
@@ -76,20 +74,19 @@ class HomeWeightServiceTest extends TestCase
     public function test_get_weight_data_returns_correct_structure_for_year()
     {
         $user = User::factory()->create();
-        $userId = $user->id;
         $today = Carbon::today();
 
         // 過去12か月のレコード作成（各月1日）
         foreach (range(0, 11) as $i) {
             $date = $today->copy()->subMonths($i)->startOfMonth();
             Record::factory()->create([
-                'user_id' => $userId,
+                'user_id' => $user->id,
                 'date' => $date,
                 'weight' => 65 + $i,
             ]);
         }
 
-        $data = $this->service->getWeightData($userId);
+        $data = $this->service->getWeightData($user);
 
         $this->assertArrayHasKey('year', $data);
         $this->assertCount(12, $data['year']['weights']); // 12か月分

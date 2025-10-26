@@ -25,12 +25,13 @@ RUN docker-php-ext-enable pdo_mysql
 COPY composer.json composer.lock ./
 COPY package*.json ./
 
-# npm / composer 依存関係インストール
-RUN npm install
-RUN composer install --no-dev --optimize-autoloader
 
 # アプリコードをコピー
 COPY . .
+
+# npm / composer 依存関係インストール
+RUN npm install
+RUN composer install --no-dev --optimize-autoloader
 
 # npm ビルド
 RUN npm run build

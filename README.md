@@ -1,5 +1,13 @@
 # WeightManagement（体重管理システム）
 
+URL: https://weightmanagement.sakuraweb.com/login<br>
+
+テストユーザー<br>
+メール: test@example.com<br>
+パスワード: password<br>
+
+開発・確認用のサンプルユーザーです。<br>
+
 ## 📘 概要
 ユーザーが日々の体重や生活習慣を簡単に記録し、健康的な体重管理を行えるアプリケーション。<br>
 体重・体脂肪率・睡眠などを一元管理し、グラフや比較でモチベーション維持をサポートします。

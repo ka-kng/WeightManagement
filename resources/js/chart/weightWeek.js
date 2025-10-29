@@ -3,12 +3,16 @@ Chart.register(...registerables);
 
 function createChart(id, labelText = '体重(kg)') {
     const el = document.getElementById(id);
-    if (!el) return;
+    if (!el) return null;
 
-    const labels = JSON.parse(el.dataset.labels);
-    const data = JSON.parse(el.dataset.data);
+    // 既に描画済みなら破棄
+    const existingChart = Chart.getChart(el);
+    if (existingChart) existingChart.destroy();
 
-    new Chart(el.getContext('2d'), {
+    const labels = JSON.parse(el.dataset.labels || '[]');
+    const data = JSON.parse(el.dataset.data || '[]');
+
+    return new Chart(el.getContext('2d'), {
         type: 'line',
         data: {
             labels,
@@ -25,8 +29,8 @@ function createChart(id, labelText = '体重(kg)') {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                y: { title: { display: true }, beginAtZero: false },
-                x: { title: { display: true, text: '' } }
+                y: { beginAtZero: false },
+                x: {}
             }
         }
     });
@@ -38,8 +42,10 @@ window.weightTabs = function() {
         charts: {},
 
         init() {
-            // 初期タブ描画
-            this.charts.week = createChart('weight-week-chart');
+            // 全タブを初期描画しておく
+            this.renderChart('week');
+            this.renderChart('month');
+            this.renderChart('year');
         },
 
         changeTab(name) {
@@ -49,6 +55,11 @@ window.weightTabs = function() {
                     this.charts[name] = createChart(`weight-${name}-chart`);
                 }
             });
+        },
+
+        renderChart(name) {
+            const id = `weight-${name}-chart`;
+            this.charts[name] = createChart(id);
         }
     }
 }

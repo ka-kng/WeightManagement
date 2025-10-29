@@ -48,17 +48,24 @@ window.sleepTabs = function () {
     charts: {},
 
     init() {
-      // 初期タブ描画
-      this.charts.week = createChart('sleep-week-chart');
+      // 初期描画で全タブを作っておく
+      this.renderChart('week');
+      this.renderChart('month');
+      this.renderChart('year');
     },
 
     changeTab(name) {
       this.tab = name;
       this.$nextTick(() => {
-        if (!this.charts[name]) {
-          this.charts[name] = createChart(`sleep-${name}-chart`);
-        }
+        this.renderChart(name);
       });
+    },
+
+    renderChart(name) {
+      const id = `sleep-${name}-chart`;
+      if (!this.charts[name]) {
+        this.charts[name] = createChart(id);
+      }
     }
   }
 }

@@ -3,12 +3,16 @@ Chart.register(...registerables);
 
 function createChart(id, labelText = '体脂肪率(%)') {
     const el = document.getElementById(id);
-    if (!el) return;
+    if (!el) return null;
 
-    const labels = JSON.parse(el.dataset.labels);
-    const data = JSON.parse(el.dataset.data);
+    // 既に描画済みなら破棄
+    const existingChart = Chart.getChart(el);
+    if (existingChart) existingChart.destroy();
 
-    new Chart(el.getContext('2d'), {
+    const labels = JSON.parse(el.dataset.labels || '[]');
+    const data = JSON.parse(el.dataset.data || '[]');
+
+    return new Chart(el.getContext('2d'), {
         type: 'line',
         data: {
             labels,
@@ -24,10 +28,7 @@ function createChart(id, labelText = '体脂肪率(%)') {
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
-            scales: {
-                y: { title: { display: true }, beginAtZero: false },
-                x: { title: { display: true, text: '' } }
-            }
+            scales: { y: { beginAtZero: false }, x: {} }
         }
     });
 }
@@ -39,16 +40,23 @@ window.bodtfatTabs = function() {
 
         init() {
             // 初期タブ描画
-            this.charts.week = createChart('bodtfat-week-chart');
+            this.renderChart('week');
+            this.renderChart('month'); // 非表示タブも描画
+            this.renderChart('year');  // 非表示タブも描画
         },
 
         changeTab(name) {
             this.tab = name;
             this.$nextTick(() => {
-                if (!this.charts[name]) {
-                    this.charts[name] = createChart(`bodtfat-${name}-chart`);
-                }
+                this.renderChart(name);
             });
+        },
+
+        renderChart(name) {
+            const id = `bodtfat-${name}-chart`;
+            if (!this.charts[name]) {
+                this.charts[name] = createChart(id);
+            }
         }
     }
 }

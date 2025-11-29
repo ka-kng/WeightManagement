@@ -1,11 +1,5 @@
 # WeightManagement（体重管理システム）
 
-URL: https://weightmanagement.sakuraweb.com/login<br>
-
-テストユーザー<br>
-メール: test@example.com<br>
-パスワード: password<br>
-
 開発・確認用のサンプルユーザーです。<br>
 
 ## 📘 概要
